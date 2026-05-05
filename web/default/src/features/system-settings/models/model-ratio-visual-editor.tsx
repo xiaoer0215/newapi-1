@@ -705,7 +705,7 @@ export const ModelRatioVisualEditor = memo(
             table={table}
             searchPlaceholder={t('Search models...')}
           />
-          <Button onClick={handleAdd}>
+          <Button type='button' onClick={handleAdd}>
             <Plus className='mr-2 h-4 w-4' />
             {t('Add model')}
           </Button>
