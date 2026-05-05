@@ -220,7 +220,10 @@ export function ApiKeysMutateDrawer({
 
   const handleSetExpiry = (months: number, days: number, hours: number) => {
     if (months === 0 && days === 0 && hours === 0) {
-      form.setValue('expired_time', undefined)
+      form.setValue('expired_time', undefined, {
+        shouldDirty: true,
+        shouldValidate: true,
+      })
       return
     }
 
@@ -229,7 +232,10 @@ export function ApiKeysMutateDrawer({
     now.setDate(now.getDate() + days)
     now.setHours(now.getHours() + hours)
 
-    form.setValue('expired_time', now)
+    form.setValue('expired_time', now, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
   }
 
   const { meta: currencyMeta } = getCurrencyDisplay()
@@ -305,7 +311,21 @@ export function ApiKeysMutateDrawer({
                       <ApiKeyGroupCombobox
                         options={groups}
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                          form.setValue('group', value, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                            shouldValidate: true,
+                          })
+
+                          if (value !== 'auto') {
+                            form.setValue('cross_group_retry', false, {
+                              shouldDirty: true,
+                              shouldTouch: true,
+                              shouldValidate: true,
+                            })
+                          }
+                        }}
                         placeholder={t('Select a group')}
                       />
                     </FormControl>
@@ -585,10 +605,12 @@ export function ApiKeysMutateDrawer({
             </Button>
           </SheetClose>
           <Button
-            form='api-key-form'
-            type='submit'
+            type='button'
             disabled={isSubmitting}
             className='w-full sm:w-auto'
+            onClick={() => {
+              void form.handleSubmit(onSubmit)()
+            }}
           >
             {isSubmitting ? t('Saving...') : t('Save changes')}
           </Button>
