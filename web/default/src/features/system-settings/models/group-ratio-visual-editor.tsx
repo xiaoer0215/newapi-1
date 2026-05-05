@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import {
   ChevronDown,
   ChevronUp,
@@ -640,7 +640,11 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            <Button onClick={() => handleSimpleAdd('groupRatio')} size='sm'>
+            <Button
+              type='button'
+              onClick={() => handleSimpleAdd('groupRatio')}
+              size='sm'
+            >
               <Plus className='mr-2 h-4 w-4' />
               {t('Add group')}
             </Button>
@@ -666,6 +670,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                         <TableCell className='text-right'>
                           <div className='flex justify-end gap-2'>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() =>
@@ -675,6 +680,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                               <Pencil className='h-4 w-4' />
                             </Button>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() =>
@@ -705,6 +711,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         <CardContent>
           <div className='space-y-4'>
             <Button
+              type='button'
               onClick={() => handleSimpleAdd('topupGroupRatio')}
               size='sm'
             >
@@ -733,6 +740,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                         <TableCell className='text-right'>
                           <div className='flex justify-end gap-2'>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() =>
@@ -742,6 +750,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                               <Pencil className='h-4 w-4' />
                             </Button>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() =>
@@ -776,7 +785,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            <Button onClick={handleUserGroupAdd} size='sm'>
+            <Button type='button' onClick={handleUserGroupAdd} size='sm'>
               <Plus className='mr-2 h-4 w-4' />
               {t('Add user group')}
             </Button>
@@ -788,7 +797,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                       <div className='flex items-center justify-between p-4'>
                         <div className='flex items-center gap-2'>
                           <CollapsibleTrigger asChild>
-                            <Button variant='ghost' size='sm'>
+                            <Button type='button' variant='ghost' size='sm'>
                               <ChevronDown className='h-4 w-4' />
                             </Button>
                           </CollapsibleTrigger>
@@ -803,6 +812,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                         </div>
                         <div className='flex gap-2'>
                           <Button
+                            type='button'
                             variant='ghost'
                             size='sm'
                             onClick={() =>
@@ -812,6 +822,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                             <Plus className='h-4 w-4' />
                           </Button>
                           <Button
+                            type='button'
                             variant='ghost'
                             size='sm'
                             onClick={() =>
@@ -845,6 +856,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                                     <TableCell className='text-right'>
                                       <div className='flex justify-end gap-2'>
                                         <Button
+                                          type='button'
                                           variant='ghost'
                                           size='sm'
                                           onClick={() =>
@@ -857,6 +869,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                                           <Pencil className='h-4 w-4' />
                                         </Button>
                                         <Button
+                                          type='button'
                                           variant='ghost'
                                           size='sm'
                                           onClick={() =>
@@ -895,7 +908,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            <Button onClick={handleUsableAdd} size='sm'>
+            <Button type='button' onClick={handleUsableAdd} size='sm'>
               <Plus className='mr-2 h-4 w-4' />
               {t('Add group')}
             </Button>
@@ -921,6 +934,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                         <TableCell className='text-right'>
                           <div className='flex justify-end gap-2'>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() => handleUsableEdit(group)}
@@ -928,6 +942,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                               <Pencil className='h-4 w-4' />
                             </Button>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() => handleUsableDelete(group.name)}
@@ -957,7 +972,11 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            <Button onClick={() => handleOpenAddIcon()} size='sm'>
+            <Button
+              type='button'
+              onClick={() => handleOpenAddIcon()}
+              size='sm'
+            >
               <Plus className='mr-2 h-4 w-4' />
               {t('Add {{title}}', { title: t('Icon') })}
             </Button>
@@ -1006,6 +1025,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                         <TableCell className='text-right'>
                           <div className='flex justify-end gap-2'>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() => handleEditIcon(item)}
@@ -1013,6 +1033,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                               <Pencil className='h-4 w-4' />
                             </Button>
                             <Button
+                              type='button'
                               variant='ghost'
                               size='sm'
                               onClick={() => handleDeleteIcon(item.name)}
@@ -1046,7 +1067,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
-            <Button onClick={handleAutoGroupAdd} size='sm'>
+            <Button type='button' onClick={handleAutoGroupAdd} size='sm'>
               <Plus className='mr-2 h-4 w-4' />
               {t('Add group')}
             </Button>
@@ -1061,6 +1082,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                     <span className='flex-1 font-medium'>{group}</span>
                     <div className='flex gap-1'>
                       <Button
+                        type='button'
                         variant='ghost'
                         size='sm'
                         disabled={index === 0}
@@ -1069,6 +1091,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                         <ChevronUp className='h-4 w-4' />
                       </Button>
                       <Button
+                        type='button'
                         variant='ghost'
                         size='sm'
                         disabled={index === autoGroupsList.length - 1}
@@ -1077,6 +1100,7 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
                         <ChevronDown className='h-4 w-4' />
                       </Button>
                       <Button
+                        type='button'
                         variant='ghost'
                         size='sm'
                         onClick={() => handleAutoGroupDelete(index)}
@@ -1143,12 +1167,15 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
           </div>
           <DialogFooter>
             <Button
+              type='button'
               variant='outline'
               onClick={() => setAutoGroupDialogOpen(false)}
             >
               {t('Cancel')}
             </Button>
-            <Button onClick={handleAutoGroupSave}>{t('Add')}</Button>
+            <Button type='button' onClick={handleAutoGroupSave}>
+              {t('Add')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1174,12 +1201,15 @@ export const GroupRatioVisualEditor = memo(function GroupRatioVisualEditor({
           </div>
           <DialogFooter>
             <Button
+              type='button'
               variant='outline'
               onClick={() => setUserGroupDialogOpen(false)}
             >
               {t('Cancel')}
             </Button>
-            <Button onClick={handleUserGroupSave}>{t('Add')}</Button>
+            <Button type='button' onClick={handleUserGroupSave}>
+              {t('Add')}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1281,6 +1311,19 @@ function SimpleGroupDialog({
 
   const title = type === 'groupRatio' ? t('group ratio') : t('top-up ratio')
 
+  useEffect(() => {
+    if (!open) return
+
+    if (editData) {
+      setName(editData.name)
+      setValue(editData.value)
+      return
+    }
+
+    setName(groupOptions[0]?.value || '')
+    setValue('')
+  }, [editData, groupOptions, open])
+
   const handleSave = () => {
     if (!name.trim() || !value.trim()) return
     onSave(name.trim(), value.trim())
@@ -1289,19 +1332,7 @@ function SimpleGroupDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        onOpenChange(nextOpen)
-        if (nextOpen && editData) {
-          setName(editData.name)
-          setValue(editData.value)
-        } else if (nextOpen) {
-          setName(groupOptions[0]?.value || '')
-          setValue('')
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -1339,10 +1370,14 @@ function SimpleGroupDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => onOpenChange(false)}
+          >
             {t('Cancel')}
           </Button>
-          <Button onClick={handleSave}>
+          <Button type='button' onClick={handleSave}>
             {editData ? t('Update') : t('Add')}
           </Button>
         </DialogFooter>
@@ -1370,6 +1405,19 @@ function UsableGroupDialog({
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
 
+  useEffect(() => {
+    if (!open) return
+
+    if (editData) {
+      setName(editData.name)
+      setDescription(editData.description)
+      return
+    }
+
+    setName(groupOptions[0]?.value || '')
+    setDescription('')
+  }, [editData, groupOptions, open])
+
   const handleSave = () => {
     if (!name.trim() || !description.trim()) return
     onSave(name.trim(), description.trim())
@@ -1378,19 +1426,7 @@ function UsableGroupDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        onOpenChange(nextOpen)
-        if (nextOpen && editData) {
-          setName(editData.name)
-          setDescription(editData.description)
-        } else if (nextOpen) {
-          setName(groupOptions[0]?.value || '')
-          setDescription('')
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -1423,10 +1459,14 @@ function UsableGroupDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => onOpenChange(false)}
+          >
             {t('Cancel')}
           </Button>
-          <Button onClick={handleSave}>
+          <Button type='button' onClick={handleSave}>
             {editData ? t('Update') : t('Add')}
           </Button>
         </DialogFooter>
@@ -1456,6 +1496,19 @@ function GroupIconDialog({
   const [name, setName] = useState('')
   const [value, setValue] = useState('')
 
+  useEffect(() => {
+    if (!open) return
+
+    if (editData) {
+      setName(editData.name)
+      setValue(editData.value)
+      return
+    }
+
+    setName(initialGroupName || groupOptions[0]?.value || '')
+    setValue('')
+  }, [editData, groupOptions, initialGroupName, open])
+
   const handleSave = () => {
     if (!name.trim() || !value.trim()) return
     onSave(name.trim(), value.trim())
@@ -1464,19 +1517,7 @@ function GroupIconDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        onOpenChange(nextOpen)
-        if (nextOpen && editData) {
-          setName(editData.name)
-          setValue(editData.value)
-        } else if (nextOpen) {
-          setName(initialGroupName || groupOptions[0]?.value || '')
-          setValue('')
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-[720px]'>
         <DialogHeader>
           <DialogTitle>
@@ -1515,10 +1556,14 @@ function GroupIconDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => onOpenChange(false)}
+          >
             {t('Cancel')}
           </Button>
-          <Button onClick={handleSave}>
+          <Button type='button' onClick={handleSave}>
             {editData ? t('Update') : t('Add')}
           </Button>
         </DialogFooter>
@@ -1552,6 +1597,19 @@ function GroupOverrideDialog({
     [groupOptions, userGroup]
   )
 
+  useEffect(() => {
+    if (!open) return
+
+    if (editData) {
+      setTargetGroup(editData.targetGroup)
+      setRatio(String(editData.ratio))
+      return
+    }
+
+    setTargetGroup(availableTargetGroupOptions[0]?.value || '')
+    setRatio('')
+  }, [availableTargetGroupOptions, editData, open])
+
   const handleSave = () => {
     if (!targetGroup.trim() || !ratio.trim()) return
     const parsedRatio = parseFloat(ratio)
@@ -1563,19 +1621,7 @@ function GroupOverrideDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        onOpenChange(nextOpen)
-        if (nextOpen && editData) {
-          setTargetGroup(editData.targetGroup)
-          setRatio(String(editData.ratio))
-        } else if (nextOpen) {
-          setTargetGroup(availableTargetGroupOptions[0]?.value || '')
-          setRatio('')
-        }
-      }}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -1627,10 +1673,14 @@ function GroupOverrideDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant='outline' onClick={() => onOpenChange(false)}>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => onOpenChange(false)}
+          >
             {t('Cancel')}
           </Button>
-          <Button onClick={handleSave}>
+          <Button type='button' onClick={handleSave}>
             {editData ? t('Update') : t('Add')}
           </Button>
         </DialogFooter>
