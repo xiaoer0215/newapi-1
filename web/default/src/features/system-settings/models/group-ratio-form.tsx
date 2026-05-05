@@ -59,7 +59,12 @@ export const GroupRatioForm = memo(function GroupRatioForm({
   return (
     <div className='space-y-6'>
       <div className='flex justify-end'>
-        <Button variant='outline' size='sm' onClick={toggleEditMode}>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          onClick={toggleEditMode}
+        >
           {editMode === 'visual' ? (
             <>
               <Code2 className='mr-2 h-4 w-4' />
@@ -121,7 +126,13 @@ export const GroupRatioForm = memo(function GroupRatioForm({
               )}
             />
 
-            <Button onClick={form.handleSubmit(onSave)} disabled={isSaving}>
+            <Button
+              type='button'
+              onClick={() => {
+                void form.handleSubmit(onSave)()
+              }}
+              disabled={isSaving}
+            >
               {isSaving ? t('Saving...') : t('Save group ratios')}
             </Button>
           </div>
