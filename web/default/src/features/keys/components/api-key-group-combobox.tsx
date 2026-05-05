@@ -108,7 +108,7 @@ export function ApiKeyGroupCombobox({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
       <PopoverTrigger asChild>
         <Button
           type='button'
@@ -138,6 +138,7 @@ export function ApiKeyGroupCombobox({
       </PopoverTrigger>
       <PopoverContent
         className='data-[state=closed]:zoom-out-100 data-[state=open]:zoom-in-100 data-[side=bottom]:slide-in-from-top-0 data-[side=left]:slide-in-from-right-0 data-[side=right]:slide-in-from-left-0 data-[side=top]:slide-in-from-bottom-0 w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-xl p-0 shadow-lg data-[state=closed]:duration-75 data-[state=open]:duration-100'
+        onCloseAutoFocus={(event) => event.preventDefault()}
         onWheel={(event) => event.stopPropagation()}
         onTouchMove={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
