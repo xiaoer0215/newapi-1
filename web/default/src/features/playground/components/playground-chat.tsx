@@ -64,16 +64,18 @@ export function PlaygroundChat({
 }: PlaygroundChatProps) {
   const [editText, setEditText] = useState('')
   const [originalText, setOriginalText] = useState('')
+  const safeMessages = Array.isArray(messages) ? messages : []
 
   useEffect(() => {
     if (!editingKey) return
-    const message = messages.find((m) => m.key === editingKey)
-    const content = message?.versions?.[0]?.content || ''
+    const message = safeMessages.find((m) => m.key === editingKey)
+    const versions = Array.isArray(message?.versions) ? message.versions : []
+    const content = versions[0]?.content || ''
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditText(content)
 
     setOriginalText(content)
-  }, [editingKey, messages])
+  }, [editingKey, safeMessages])
 
   const isEditing = (key: string) => editingKey === key
   const isEmpty = useMemo(() => !editText.trim(), [editText])
@@ -86,10 +88,12 @@ export function PlaygroundChat({
       {/* Remove outer padding; apply padding to inner centered container to align with input */}
       <ConversationContent className='p-0'>
         <div className='mx-auto w-full max-w-4xl px-4 py-4'>
-          {messages.map((message, messageIndex) => {
-            const { versions = [] } = message
+          {safeMessages.map((message, messageIndex) => {
+            const versions = Array.isArray(message?.versions)
+              ? message.versions
+              : []
             const isLastAssistantMessage =
-              messageIndex === messages.length - 1 &&
+              messageIndex === safeMessages.length - 1 &&
               message.from === MESSAGE_ROLES.ASSISTANT
             return (
               <Branch defaultBranch={0} key={message.key}>
@@ -143,7 +147,10 @@ export function PlaygroundChat({
                             {(() => {
                               const isAssistant =
                                 message.from === MESSAGE_ROLES.ASSISTANT
-                              const hasSources = !!message.sources?.length
+                              const safeSources = Array.isArray(message.sources)
+                                ? message.sources
+                                : []
+                              const hasSources = safeSources.length > 0
                               const showReasoning =
                                 isAssistant && !!message.reasoning?.content
                               const showLoader =
@@ -181,10 +188,10 @@ export function PlaygroundChat({
                                   {hasSources && (
                                     <Sources>
                                       <SourcesTrigger
-                                        count={message.sources!.length}
+                                        count={safeSources.length}
                                       />
                                       <SourcesContent>
-                                        {message.sources!.map(
+                                        {safeSources.map(
                                           (source, sourceIndex) => (
                                             <Source
                                               href={source.href}

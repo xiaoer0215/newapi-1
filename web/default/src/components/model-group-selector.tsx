@@ -35,7 +35,7 @@ interface ModelOption {
 interface GroupOption {
   label: string
   value: string
-  ratio?: number
+  ratio?: number | string
   desc?: string
   description?: string
 }
@@ -138,16 +138,17 @@ export const ModelSelector: React.FC<ModelSelectorProps> = React.memo(
     const [open, setOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState('')
     const isMobile = useIsMobile()
+    const safeModels = Array.isArray(models) ? models : []
 
     const currentModel = useMemo(
-      () => models.find((m) => m.value === selectedModel),
-      [models, selectedModel]
+      () => safeModels.find((m) => m.value === selectedModel),
+      [safeModels, selectedModel]
     )
 
     // Group models by category
     const groupedModels = useMemo(
       () =>
-        models.reduce(
+        safeModels.reduce(
           (acc, model) => {
             const category = model.category || t('Other')
             if (!acc[category]) {
@@ -158,7 +159,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = React.memo(
           },
           {} as Record<string, ModelOption[]>
         ),
-      [models, t]
+      [safeModels, t]
     )
 
     // Filter models by search query
@@ -335,10 +336,11 @@ export const GroupSelector: React.FC<GroupSelectorProps> = React.memo(
     const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const isMobile = useIsMobile()
+    const safeGroups = Array.isArray(groups) ? groups : []
 
     const currentGroup = useMemo(
-      () => groups.find((g) => g.value === selectedGroup),
-      [groups, selectedGroup]
+      () => safeGroups.find((g) => g.value === selectedGroup),
+      [safeGroups, selectedGroup]
     )
 
     const handleGroupChange = useCallback(
@@ -358,7 +360,7 @@ export const GroupSelector: React.FC<GroupSelectorProps> = React.memo(
             : 'rounded-lg'
         )}
         filter={(value, search) => {
-          const group = groups.find((g) => g.value === value)
+          const group = safeGroups.find((g) => g.value === value)
           if (!group || !search) return 1
 
           const searchTerm = search.toLowerCase()
@@ -382,7 +384,7 @@ export const GroupSelector: React.FC<GroupSelectorProps> = React.memo(
             <div className='text-muted-foreground px-2 py-1 text-[10px] font-medium'>
               {t('Model Group')}
             </div>
-            {groups.map((group) => (
+            {safeGroups.map((group) => (
               <CommandItem
                 key={group.value}
                 value={group.value}
@@ -443,7 +445,7 @@ export const GroupSelector: React.FC<GroupSelectorProps> = React.memo(
               </DrawerHeader>
               <div className='max-h-[calc(80vh-100px)] overflow-y-auto px-4 pb-6'>
                 <div className='space-y-2'>
-                  {groups.map((group) => (
+                  {safeGroups.map((group) => (
                     <Button
                       key={group.value}
                       variant='outline'

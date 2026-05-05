@@ -9,7 +9,10 @@ export function loadConfig(): Partial<PlaygroundConfig> {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.CONFIG)
     if (saved) {
-      return JSON.parse(saved)
+      const parsed = JSON.parse(saved) as unknown
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Partial<PlaygroundConfig>
+      }
     }
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -37,7 +40,10 @@ export function loadParameterEnabled(): Partial<ParameterEnabled> {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.PARAMETER_ENABLED)
     if (saved) {
-      return JSON.parse(saved)
+      const parsed = JSON.parse(saved) as unknown
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Partial<ParameterEnabled>
+      }
     }
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -70,10 +76,16 @@ export function loadMessages(): Message[] | null {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.MESSAGES)
     if (saved) {
-      const parsed: Message[] = JSON.parse(saved)
-      const sanitized = sanitizeMessagesOnLoad(parsed)
+      const parsed = JSON.parse(saved) as unknown
+      if (!Array.isArray(parsed)) {
+        saveMessages([])
+        return []
+      }
+
+      const parsedMessages = parsed as Message[]
+      const sanitized = sanitizeMessagesOnLoad(parsedMessages)
       // Persist sanitized result to avoid re-sanitizing on subsequent loads
-      if (sanitized !== parsed) {
+      if (sanitized !== parsedMessages) {
         saveMessages(sanitized)
       }
       return sanitized

@@ -47,13 +47,86 @@ export async function getUserGroups(): Promise<GroupOption[]> {
     return []
   }
 
-  const groupData = data.data as Record<string, { desc: string; ratio: number }>
+  const rawGroups = data.data as unknown
+
+  if (Array.isArray(rawGroups)) {
+    const normalizedGroups: GroupOption[] = []
+
+    rawGroups.forEach((item) => {
+      if (typeof item === 'string') {
+        normalizedGroups.push({
+          label: item,
+          value: item,
+          desc: item,
+        })
+        return
+      }
+
+      if (!item || typeof item !== 'object') {
+        return
+      }
+
+      const group = item as Record<string, unknown>
+      const value =
+        typeof group.value === 'string'
+          ? group.value
+          : typeof group.label === 'string'
+            ? group.label
+            : ''
+
+      if (!value) {
+        return
+      }
+
+      normalizedGroups.push({
+        label:
+          typeof group.label === 'string' && group.label.trim()
+            ? group.label
+            : value,
+        value,
+        ratio:
+          typeof group.ratio === 'number' || typeof group.ratio === 'string'
+            ? group.ratio
+            : undefined,
+        desc:
+          typeof group.desc === 'string'
+            ? group.desc
+            : typeof group.description === 'string'
+              ? group.description
+              : value,
+      })
+    })
+
+    return normalizedGroups
+  }
+
+  if (typeof rawGroups !== 'object') {
+    return []
+  }
+
+  const groupData = rawGroups as Record<string, unknown>
 
   // label is for button display (name only); desc is for dropdown content
-  return Object.entries(groupData).map(([group, info]) => ({
-    label: group,
-    value: group,
-    ratio: info.ratio,
-    desc: info.desc,
-  }))
+  return Object.entries(groupData).map(([group, info]) => {
+    const normalizedInfo =
+      info && typeof info === 'object'
+        ? (info as Record<string, unknown>)
+        : ({} as Record<string, unknown>)
+
+    return {
+      label: group,
+      value: group,
+      ratio:
+        typeof normalizedInfo.ratio === 'number' ||
+        typeof normalizedInfo.ratio === 'string'
+          ? normalizedInfo.ratio
+          : undefined,
+      desc:
+        typeof normalizedInfo.desc === 'string'
+          ? normalizedInfo.desc
+          : typeof normalizedInfo.description === 'string'
+            ? normalizedInfo.description
+            : group,
+    }
+  })
 }
