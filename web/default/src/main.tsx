@@ -26,6 +26,61 @@ import './styles/index.css'
 // Ensure VChart theme is initialized before any chart mounts (prevents white default theme flash)
 // VChart theme is driven by our ThemeProvider (html.light/html.dark) via per-chart `theme` prop.
 
+;(function applyBrowserCompatibilityPatches() {
+  if (typeof window === 'undefined') return
+
+  try {
+    const browserWindow = window as typeof window & {
+      MutationEvent?: typeof Event
+    }
+
+    if (
+      typeof browserWindow.MutationEvent === 'undefined' &&
+      typeof browserWindow.Event !== 'undefined'
+    ) {
+      browserWindow.MutationEvent = browserWindow.Event
+    }
+  } catch {
+    /* empty */
+  }
+
+  try {
+    if (typeof Node === 'undefined') return
+
+    const nodeProto = Node.prototype as Node & {
+      __newApiSafeRemoveChildPatched__?: boolean
+    }
+
+    if (nodeProto.__newApiSafeRemoveChildPatched__) return
+
+    const originalRemoveChild = nodeProto.removeChild
+
+    nodeProto.removeChild = function removeChildSafely<T extends Node>(
+      child: T
+    ) {
+      if (!child || child.parentNode !== this) {
+        return child
+      }
+
+      try {
+        return originalRemoveChild.call(this, child) as T
+      } catch (error) {
+        if (
+          error instanceof DOMException &&
+          error.name === 'NotFoundError'
+        ) {
+          return child
+        }
+        throw error
+      }
+    }
+
+    nodeProto.__newApiSafeRemoveChildPatched__ = true
+  } catch {
+    /* empty */
+  }
+})()
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
