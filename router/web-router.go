@@ -1,10 +1,11 @@
-﻿package router
+package router
 
 import (
 	"bytes"
 	"embed"
 	"html"
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -184,7 +185,13 @@ func SetWebRouter(router *gin.Engine, assets ThemeAssets) {
 			controller.RelayNotFound(c)
 			return
 		}
-		c.Header("Cache-Control", "no-cache")
+		if path.Ext(c.Request.URL.Path) != "" {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		c.Header("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0")
+		c.Header("Pragma", "no-cache")
+		c.Header("Expires", "0")
 		if common.GetTheme() == "classic" {
 			c.Data(http.StatusOK, "text/html; charset=utf-8", currentSEOIndexPage(assets.ClassicIndexPage))
 		} else {
