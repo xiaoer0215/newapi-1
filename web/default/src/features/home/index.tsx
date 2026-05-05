@@ -29,6 +29,44 @@ function looksLikeHtmlFragment(content = '') {
   return /^\s*<([a-zA-Z!][^>]*)>/m.test(content) || /<\/[a-zA-Z][^>]*>/m.test(content)
 }
 
+function buildSrcDocFromHtmlFragment(content = '') {
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+        width: 100%;
+      }
+      body {
+        box-sizing: border-box;
+      }
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+    </style>
+    <script>
+      window.addEventListener('message', function (event) {
+        var data = event && event.data ? event.data : {}
+        if (typeof data.lang === 'string' && data.lang) {
+          document.documentElement.lang = data.lang
+        }
+        if (typeof data.themeMode === 'string' && data.themeMode) {
+          document.documentElement.dataset.theme = data.themeMode
+          document.documentElement.classList.toggle('dark', data.themeMode === 'dark')
+          document.documentElement.classList.toggle('light', data.themeMode !== 'dark')
+        }
+      })
+    </script>
+  </head>
+  <body>${content}</body>
+</html>`
+}
+
 function shouldPromoteToTopNavigation(href = '') {
   const trimmedHref = href.trim()
   if (
@@ -76,7 +114,10 @@ export function Home() {
     }
 
     if (looksLikeHtmlFragment(trimmedContent)) {
-      return { mode: 'html', content: rawContent }
+      return {
+        mode: 'iframe-srcdoc',
+        content: buildSrcDocFromHtmlFragment(rawContent),
+      }
     }
 
     return { mode: 'markdown', content: rawContent }
@@ -161,11 +202,6 @@ export function Home() {
               className='min-h-[100dvh] w-full border-none'
               title={t('Custom Home Page')}
               onLoad={handleHomePageFrameLoad}
-            />
-          ) : resolvedContent.mode === 'html' ? (
-            <div
-              className='min-h-[100dvh] w-full'
-              dangerouslySetInnerHTML={{ __html: resolvedContent.content }}
             />
           ) : (
             <div className='container mx-auto px-4 py-8'>
