@@ -132,12 +132,14 @@ export function SignUpForm({
 
     setIsLoading(true)
     try {
+      const affiliateCode = getAffiliateCode()
       const res = await register({
         username: data.username,
         password: data.password,
         email: data.email || undefined,
         verification_code: verificationCode || undefined,
-        aff: getAffiliateCode(),
+        aff: affiliateCode,
+        aff_code: affiliateCode,
         turnstile: turnstileToken,
       })
 
