@@ -121,9 +121,10 @@ func generateDefaultSidebarConfigForRole(userRole int) string {
 
 	// 个人中心区域 - 所有用户都可以访问
 	defaultConfig["personal"] = map[string]interface{}{
-		"enabled":  true,
-		"topup":    true,
-		"personal": true,
+		"enabled":   true,
+		"topup":     true,
+		"affiliate": true,
+		"personal":  true,
 	}
 
 	// 管理员区域 - 根据角色决定
@@ -336,12 +337,13 @@ func inviteUser(inviterId int) (err error) {
 		return err
 	}
 	user.AffCount++
-	user.AffQuota += common.QuotaForInviter
-	user.AffHistoryQuota += common.QuotaForInviter
 	return DB.Save(user).Error
 }
 
 func (user *User) TransferAffQuotaToQuota(quota int) error {
+	if !common.AffiliateTransferEnabled {
+		return errors.New("affiliate transfer is disabled")
+	}
 	// 检查quota是否小于最小额度
 	if float64(quota) < common.QuotaPerUnit {
 		return fmt.Errorf("转移额度最小为%s！", logger.LogQuota(int(common.QuotaPerUnit)))
@@ -425,10 +427,8 @@ func (user *User) Insert(inviterId int) error {
 			_ = IncreaseUserQuota(user.Id, common.QuotaForInvitee, true)
 			RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("使用邀请码赠送 %s", logger.LogQuota(common.QuotaForInvitee)))
 		}
-		if common.QuotaForInviter > 0 {
-			//_ = IncreaseUserQuota(inviterId, common.QuotaForInviter)
-			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请用户赠送 %s", logger.LogQuota(common.QuotaForInviter)))
-			_ = inviteUser(inviterId)
+		if err := inviteUser(inviterId); err == nil {
+			RecordLog(inviterId, LogTypeSystem, "Referral established successfully")
 		}
 	}
 	return nil
@@ -486,9 +486,8 @@ func (user *User) FinalizeOAuthUserCreation(inviterId int) {
 			_ = IncreaseUserQuota(user.Id, common.QuotaForInvitee, true)
 			RecordLog(user.Id, LogTypeSystem, fmt.Sprintf("使用邀请码赠送 %s", logger.LogQuota(common.QuotaForInvitee)))
 		}
-		if common.QuotaForInviter > 0 {
-			RecordLog(inviterId, LogTypeSystem, fmt.Sprintf("邀请用户赠送 %s", logger.LogQuota(common.QuotaForInviter)))
-			_ = inviteUser(inviterId)
+		if err := inviteUser(inviterId); err == nil {
+			RecordLog(inviterId, LogTypeSystem, "Referral established successfully")
 		}
 	}
 }
