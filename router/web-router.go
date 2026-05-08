@@ -178,6 +178,23 @@ func SetWebRouter(router *gin.Engine, assets ThemeAssets) {
 	router.Use(gzip.Gzip(gzip.DefaultCompression))
 	router.Use(middleware.GlobalWebRateLimit())
 	router.Use(middleware.Cache())
+	registerAliasHandler := func(c *gin.Context) {
+		c.Set(middleware.RouteTagKey, "web")
+		if common.GetTheme() == "classic" {
+			c.Header("Cache-Control", "no-store, no-cache, must-revalidate, private, max-age=0")
+			c.Header("Pragma", "no-cache")
+			c.Header("Expires", "0")
+			c.Data(http.StatusOK, "text/html; charset=utf-8", currentSEOIndexPage(assets.ClassicIndexPage))
+			return
+		}
+		target := "/sign-up"
+		if rawQuery := strings.TrimSpace(c.Request.URL.RawQuery); rawQuery != "" {
+			target += "?" + rawQuery
+		}
+		c.Redirect(http.StatusFound, target)
+	}
+	router.GET("/register", registerAliasHandler)
+	router.GET("/register/", registerAliasHandler)
 	router.Use(static.Serve("/", themeFS))
 	router.NoRoute(func(c *gin.Context) {
 		c.Set(middleware.RouteTagKey, "web")
