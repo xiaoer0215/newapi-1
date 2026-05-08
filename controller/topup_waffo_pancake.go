@@ -254,6 +254,11 @@ func WaffoPancakeWebhook(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "retry")
 		return
 	}
+	if _, err := model.SettleAffiliateCommissionByTradeNo(tradeNo); err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("Waffo Pancake affiliate commission settle failed trade_no=%s event_id=%s order_id=%s client_ip=%s error=%q", tradeNo, event.ID, event.Data.OrderID, c.ClientIP(), err.Error()))
+		c.String(http.StatusInternalServerError, "retry")
+		return
+	}
 
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("Waffo Pancake 充值成功 trade_no=%s event_id=%s order_id=%s client_ip=%s", tradeNo, event.ID, event.Data.OrderID, c.ClientIP()))
 	c.String(http.StatusOK, "OK")
