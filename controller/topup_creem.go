@@ -353,6 +353,11 @@ func handleCheckoutCompleted(c *gin.Context, event *CreemWebhookEvent) {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
+	if _, err = model.SettleAffiliateCommissionByTradeNo(referenceId); err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("Creem affiliate commission settle failed trade_no=%s creem_order_id=%s client_ip=%s error=%q", referenceId, event.Object.Order.Id, c.ClientIP(), err.Error()))
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("Creem 充值成功 trade_no=%s creem_order_id=%s quota=%d money=%.2f client_ip=%s", referenceId, event.Object.Order.Id, topUp.Amount, topUp.Money, c.ClientIP()))
 	c.Status(http.StatusOK)
