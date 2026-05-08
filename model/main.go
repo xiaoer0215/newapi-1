@@ -1,4 +1,4 @@
-package model
+﻿package model
 
 import (
 	"fmt"
@@ -255,7 +255,7 @@ func migrateDB() error {
 		return err
 	}
 
-	err := DB.AutoMigrate(
+	models := []interface{}{
 		&Channel{},
 		&Token{},
 		&User{},
@@ -275,16 +275,25 @@ func migrateDB() error {
 		&TwoFA{},
 		&TwoFABackupCode{},
 		&Checkin{},
+		&AffiliateWithdrawal{},
 		&SubscriptionOrder{},
 		&UserSubscription{},
 		&SubscriptionPreConsumeRecord{},
 		&CustomOAuthProvider{},
 		&UserOAuthBinding{},
-	)
+		&PerfMetric{},
+	}
+	if !common.UsingSQLite {
+		models = append(models, &AffiliateCommissionRecord{})
+	}
+	err := DB.AutoMigrate(models...)
 	if err != nil {
 		return err
 	}
 	if common.UsingSQLite {
+		if err := ensureAffiliateCommissionRecordTableSQLite(); err != nil {
+			return err
+		}
 		if err := ensureSubscriptionPlanTableSQLite(); err != nil {
 			return err
 		}
@@ -323,11 +332,19 @@ func migrateDBFast() error {
 		{&TwoFA{}, "TwoFA"},
 		{&TwoFABackupCode{}, "TwoFABackupCode"},
 		{&Checkin{}, "Checkin"},
+		{&AffiliateWithdrawal{}, "AffiliateWithdrawal"},
 		{&SubscriptionOrder{}, "SubscriptionOrder"},
 		{&UserSubscription{}, "UserSubscription"},
 		{&SubscriptionPreConsumeRecord{}, "SubscriptionPreConsumeRecord"},
 		{&CustomOAuthProvider{}, "CustomOAuthProvider"},
 		{&UserOAuthBinding{}, "UserOAuthBinding"},
+		{&PerfMetric{}, "PerfMetric"},
+	}
+	if !common.UsingSQLite {
+		migrations = append(migrations, struct {
+			model interface{}
+			name  string
+		}{&AffiliateCommissionRecord{}, "AffiliateCommissionRecord"})
 	}
 	// 动态计算migration数量，确保errChan缓冲区足够大
 	errChan := make(chan error, len(migrations))
@@ -353,6 +370,9 @@ func migrateDBFast() error {
 		}
 	}
 	if common.UsingSQLite {
+		if err := ensureAffiliateCommissionRecordTableSQLite(); err != nil {
+			return err
+		}
 		if err := ensureSubscriptionPlanTableSQLite(); err != nil {
 			return err
 		}
@@ -376,6 +396,42 @@ func migrateLOGDB() error {
 type sqliteColumnDef struct {
 	Name string
 	DDL  string
+}
+
+func ensureAffiliateCommissionRecordTableSQLite() error {
+	if !common.UsingSQLite {
+		return nil
+	}
+	tableName := "affiliate_commission_records"
+	if !DB.Migrator().HasTable(tableName) {
+		createSQL := `CREATE TABLE ` + "`" + tableName + "`" + ` (
+` + "`id`" + ` integer,
+` + "`user_id`" + ` integer,
+` + "`inviter_id`" + ` integer,
+` + "`top_up_id`" + ` integer,
+` + "`trade_no`" + ` varchar(255),
+` + "`top_up_quota`" + ` integer NOT NULL,
+` + "`commission_quota`" + ` integer NOT NULL,
+` + "`commission_percentage_snapshot`" + ` decimal(10,4) NOT NULL,
+` + "`created_at`" + ` integer,
+PRIMARY KEY (` + "`id`" + `)
+)`
+		if err := DB.Exec(createSQL).Error; err != nil {
+			return err
+		}
+	}
+	indexes := []string{
+		"CREATE INDEX IF NOT EXISTS `idx_affiliate_commission_records_user_id` ON `affiliate_commission_records`(`user_id`)",
+		"CREATE INDEX IF NOT EXISTS `idx_affiliate_commission_records_inviter_id` ON `affiliate_commission_records`(`inviter_id`)",
+		"CREATE INDEX IF NOT EXISTS `idx_affiliate_commission_records_top_up_id` ON `affiliate_commission_records`(`top_up_id`)",
+		"CREATE UNIQUE INDEX IF NOT EXISTS `idx_affiliate_commission_records_trade_no` ON `affiliate_commission_records`(`trade_no`)",
+	}
+	for _, sql := range indexes {
+		if err := DB.Exec(sql).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func ensureSubscriptionPlanTableSQLite() error {
@@ -704,3 +760,4 @@ func PingDB() error {
 	common.SysLog("Database pinged successfully")
 	return nil
 }
+
