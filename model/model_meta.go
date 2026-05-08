@@ -2,6 +2,7 @@ package model
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/QuantumNous/new-api/common"
 
@@ -21,18 +22,30 @@ type BoundChannel struct {
 }
 
 type Model struct {
-	Id           int            `json:"id"`
-	ModelName    string         `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_name_delete_at,priority:1"`
-	Description  string         `json:"description,omitempty" gorm:"type:text"`
-	Icon         string         `json:"icon,omitempty" gorm:"type:varchar(128)"`
-	Tags         string         `json:"tags,omitempty" gorm:"type:varchar(255)"`
-	VendorID     int            `json:"vendor_id,omitempty" gorm:"index"`
-	Endpoints    string         `json:"endpoints,omitempty" gorm:"type:text"`
-	Status       int            `json:"status" gorm:"default:1"`
-	SyncOfficial int            `json:"sync_official" gorm:"default:1"`
-	CreatedTime  int64          `json:"created_time" gorm:"bigint"`
-	UpdatedTime  int64          `json:"updated_time" gorm:"bigint"`
-	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:uk_model_name_delete_at,priority:2"`
+	Id               int            `json:"id"`
+	ModelName        string         `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_name_delete_at,priority:1"`
+	Description      string         `json:"description,omitempty" gorm:"type:text"`
+	Icon             string         `json:"icon,omitempty" gorm:"type:varchar(128)"`
+	Tags             string         `json:"tags,omitempty" gorm:"type:varchar(255)"`
+	VendorID         int            `json:"vendor_id,omitempty" gorm:"index"`
+	Endpoints        string         `json:"endpoints,omitempty" gorm:"type:text"`
+	ContextLength    int            `json:"context_length,omitempty"`
+	MaxOutputTokens  int            `json:"max_output_tokens,omitempty"`
+	KnowledgeCutoff  string         `json:"knowledge_cutoff,omitempty" gorm:"type:varchar(32)"`
+	ReleaseDate      string         `json:"release_date,omitempty" gorm:"type:varchar(32)"`
+	ParameterCount   string         `json:"parameter_count,omitempty" gorm:"type:varchar(64)"`
+	InputModalities  []string       `json:"input_modalities,omitempty" gorm:"-"`
+	OutputModalities []string       `json:"output_modalities,omitempty" gorm:"-"`
+	Capabilities     []string       `json:"capabilities,omitempty" gorm:"-"`
+	Status           int            `json:"status" gorm:"default:1"`
+	SyncOfficial     int            `json:"sync_official" gorm:"default:1"`
+	CreatedTime      int64          `json:"created_time" gorm:"bigint"`
+	UpdatedTime      int64          `json:"updated_time" gorm:"bigint"`
+	DeletedAt        gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:uk_model_name_delete_at,priority:2"`
+
+	InputModalitiesRaw  string `json:"-" gorm:"column:input_modalities;type:text"`
+	OutputModalitiesRaw string `json:"-" gorm:"column:output_modalities;type:text"`
+	CapabilitiesRaw     string `json:"-" gorm:"column:capabilities;type:text"`
 
 	BoundChannels []BoundChannel `json:"bound_channels,omitempty" gorm:"-"`
 	EnableGroups  []string       `json:"enable_groups,omitempty" gorm:"-"`
@@ -43,7 +56,91 @@ type Model struct {
 	MatchedCount  int      `json:"matched_count,omitempty" gorm:"-"`
 }
 
+func (mi *Model) AfterFind(tx *gorm.DB) error {
+	mi.InputModalities = parseStringListField(mi.InputModalitiesRaw)
+	mi.OutputModalities = parseStringListField(mi.OutputModalitiesRaw)
+	mi.Capabilities = parseStringListField(mi.CapabilitiesRaw)
+	return nil
+}
+
+func (mi *Model) BeforeSave(tx *gorm.DB) error {
+	return mi.syncMetadataColumns()
+}
+
+func (mi *Model) syncMetadataColumns() error {
+	inputRaw, err := stringifyStringListField(mi.InputModalities)
+	if err != nil {
+		return err
+	}
+	outputRaw, err := stringifyStringListField(mi.OutputModalities)
+	if err != nil {
+		return err
+	}
+	capabilitiesRaw, err := stringifyStringListField(mi.Capabilities)
+	if err != nil {
+		return err
+	}
+
+	mi.InputModalitiesRaw = inputRaw
+	mi.OutputModalitiesRaw = outputRaw
+	mi.CapabilitiesRaw = capabilitiesRaw
+	return nil
+}
+
+func parseStringListField(raw string) []string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+	var items []string
+	if err := common.UnmarshalJsonStr(raw, &items); err != nil {
+		return nil
+	}
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		result = append(result, item)
+	}
+	if len(result) == 0 {
+		return nil
+	}
+	return result
+}
+
+func stringifyStringListField(items []string) (string, error) {
+	if len(items) == 0 {
+		return "", nil
+	}
+	normalized := make([]string, 0, len(items))
+	seen := make(map[string]struct{}, len(items))
+	for _, item := range items {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+		if _, ok := seen[item]; ok {
+			continue
+		}
+		seen[item] = struct{}{}
+		normalized = append(normalized, item)
+	}
+	if len(normalized) == 0 {
+		return "", nil
+	}
+	data, err := common.Marshal(normalized)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 func (mi *Model) Insert() error {
+	if err := mi.syncMetadataColumns(); err != nil {
+		return err
+	}
 	now := common.GetTimestamp()
 	mi.CreatedTime = now
 	mi.UpdatedTime = now
@@ -74,10 +171,31 @@ func IsModelNameDuplicated(id int, name string) (bool, error) {
 }
 
 func (mi *Model) Update() error {
+	if err := mi.syncMetadataColumns(); err != nil {
+		return err
+	}
 	mi.UpdatedTime = common.GetTimestamp()
-	// 使用 Select 强制更新所有字段，包括零值
 	return DB.Model(&Model{}).Where("id = ?", mi.Id).
-		Select("model_name", "description", "icon", "tags", "vendor_id", "endpoints", "status", "sync_official", "name_rule", "updated_time").
+		Select(
+			"model_name",
+			"description",
+			"icon",
+			"tags",
+			"vendor_id",
+			"endpoints",
+			"context_length",
+			"max_output_tokens",
+			"knowledge_cutoff",
+			"release_date",
+			"parameter_count",
+			"input_modalities",
+			"output_modalities",
+			"capabilities",
+			"status",
+			"sync_official",
+			"name_rule",
+			"updated_time",
+		).
 		Updates(mi).Error
 }
 
