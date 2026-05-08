@@ -1,4 +1,4 @@
-package router
+﻿package router
 
 import (
 	"github.com/QuantumNous/new-api/controller"
@@ -31,6 +31,8 @@ func SetApiRouter(router *gin.Engine) {
 		//apiRouter.GET("/midjourney", controller.GetMidjourney)
 		apiRouter.GET("/home_page_content", controller.GetHomePageContent)
 		apiRouter.GET("/pricing", middleware.TryUserAuth(), controller.GetPricing)
+		apiRouter.GET("/perf-metrics", middleware.TryUserAuth(), controller.GetPerfMetrics)
+		apiRouter.GET("/rankings", controller.GetRankings)
 		apiRouter.GET("/verification", middleware.EmailVerificationRateLimit(), middleware.TurnstileCheck(), controller.SendEmailVerification)
 		apiRouter.GET("/reset_password", middleware.CriticalRateLimit(), middleware.TurnstileCheck(), controller.SendPasswordResetEmail)
 		apiRouter.POST("/user/reset", middleware.CriticalRateLimit(), controller.ResetPassword)
@@ -86,6 +88,12 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.POST("/passkey/verify/finish", controller.PasskeyVerifyFinish)
 				selfRoute.DELETE("/passkey", controller.PasskeyDelete)
 				selfRoute.GET("/aff", controller.GetAffCode)
+				selfRoute.GET("/affiliate/summary", controller.GetAffiliateSummary)
+				selfRoute.GET("/affiliate/records", controller.GetAffiliateRecords)
+				selfRoute.GET("/affiliate/invitees", controller.GetAffiliateInvitees)
+				selfRoute.GET("/affiliate/withdrawals", controller.GetAffiliateWithdrawals)
+				selfRoute.POST("/affiliate/transfer", controller.TransferAffiliateQuota)
+				selfRoute.POST("/affiliate/withdraw", controller.CreateAffiliateWithdrawal)
 				selfRoute.GET("/topup/info", controller.GetTopUpInfo)
 				selfRoute.GET("/topup/self", controller.GetUserTopUps)
 				selfRoute.POST("/topup", middleware.CriticalRateLimit(), controller.TopUp)
@@ -98,7 +106,7 @@ func SetApiRouter(router *gin.Engine) {
 				selfRoute.POST("/waffo/pay", middleware.CriticalRateLimit(), controller.RequestWaffoPay)
 				//selfRoute.POST("/waffo-pancake/amount", controller.RequestWaffoPancakeAmount)
 				//selfRoute.POST("/waffo-pancake/pay", middleware.CriticalRateLimit(), controller.RequestWaffoPancakePay)
-				selfRoute.POST("/aff_transfer", controller.TransferAffQuota)
+				selfRoute.POST("/aff_transfer", controller.TransferAffiliateQuota)
 				selfRoute.PUT("/setting", controller.UpdateUserSetting)
 
 				// 2FA routes
@@ -123,6 +131,10 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.GET("/", controller.GetAllUsers)
 				adminRoute.GET("/topup", controller.GetAllTopUps)
 				adminRoute.POST("/topup/complete", controller.AdminCompleteTopUp)
+				adminRoute.GET("/admin/affiliate/invite-relations", controller.AdminGetAffiliateInviteRelations)
+				adminRoute.GET("/admin/affiliate/records", controller.AdminGetAffiliateCommissionRecords)
+				adminRoute.GET("/admin/affiliate/withdrawals", controller.AdminGetAffiliateWithdrawals)
+				adminRoute.POST("/admin/affiliate/withdrawals/:id/review", controller.AdminReviewAffiliateWithdrawal)
 				adminRoute.GET("/search", controller.SearchUsers)
 				adminRoute.GET("/:id/oauth/bindings", controller.GetUserOAuthBindingsByAdmin)
 				adminRoute.DELETE("/:id/oauth/bindings/:provider_id", controller.UnbindCustomOAuthByAdmin)
@@ -398,3 +410,4 @@ func SetApiRouter(router *gin.Engine) {
 		}
 	}
 }
+
