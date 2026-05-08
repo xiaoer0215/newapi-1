@@ -21,6 +21,14 @@ type Pricing struct {
 	Icon                   string                  `json:"icon,omitempty"`
 	Tags                   string                  `json:"tags,omitempty"`
 	VendorID               int                     `json:"vendor_id,omitempty"`
+	ContextLength          int                     `json:"context_length,omitempty"`
+	MaxOutputTokens        int                     `json:"max_output_tokens,omitempty"`
+	KnowledgeCutoff        string                  `json:"knowledge_cutoff,omitempty"`
+	ReleaseDate            string                  `json:"release_date,omitempty"`
+	ParameterCount         string                  `json:"parameter_count,omitempty"`
+	InputModalities        []string                `json:"input_modalities,omitempty"`
+	OutputModalities       []string                `json:"output_modalities,omitempty"`
+	Capabilities           []string                `json:"capabilities,omitempty"`
 	QuotaType              int                     `json:"quota_type"`
 	ModelRatio             float64                 `json:"model_ratio"`
 	ModelPrice             float64                 `json:"model_price"`
@@ -295,7 +303,7 @@ func updatePricing() {
 
 		// 补充模型元数据（描述、标签、供应商、状态）
 		if meta, ok := metaMap[model]; ok {
-			// 若模型被禁用(status!=1)，则直接跳过，不返回给前端
+			// ?????????(status!=1)????????????????????
 			if meta.Status != 1 {
 				continue
 			}
@@ -303,6 +311,14 @@ func updatePricing() {
 			pricing.Icon = meta.Icon
 			pricing.Tags = meta.Tags
 			pricing.VendorID = meta.VendorID
+			pricing.ContextLength = meta.ContextLength
+			pricing.MaxOutputTokens = meta.MaxOutputTokens
+			pricing.KnowledgeCutoff = meta.KnowledgeCutoff
+			pricing.ReleaseDate = meta.ReleaseDate
+			pricing.ParameterCount = meta.ParameterCount
+			pricing.InputModalities = meta.InputModalities
+			pricing.OutputModalities = meta.OutputModalities
+			pricing.Capabilities = meta.Capabilities
 		}
 		modelPrice, findPrice := ratio_setting.GetModelPrice(model, false)
 		if findPrice {
