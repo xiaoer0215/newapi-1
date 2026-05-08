@@ -143,6 +143,12 @@ func InitOptionMap() {
 	common.OptionMap["QuotaForNewUser"] = strconv.Itoa(common.QuotaForNewUser)
 	common.OptionMap["QuotaForInviter"] = strconv.Itoa(common.QuotaForInviter)
 	common.OptionMap["QuotaForInvitee"] = strconv.Itoa(common.QuotaForInvitee)
+	common.OptionMap["AffiliateCommissionPercentage"] = strconv.FormatFloat(common.AffiliateCommissionPercentage, 'f', -1, 64)
+	common.OptionMap["AffiliateCommissionTiers"] = common.AffiliateCommissionTiersToJSONString()
+	common.OptionMap["AffiliateTransferEnabled"] = strconv.FormatBool(common.AffiliateTransferEnabled)
+	common.OptionMap["AffiliateWithdrawEnabled"] = strconv.FormatBool(common.AffiliateWithdrawEnabled)
+	common.OptionMap["AffiliateMinWithdrawQuota"] = strconv.Itoa(common.AffiliateMinWithdrawQuota)
+	common.OptionMap["AffiliateWithdrawNotice"] = ""
 	common.OptionMap["QuotaRemindThreshold"] = strconv.Itoa(common.QuotaRemindThreshold)
 	common.OptionMap["PreConsumedQuota"] = strconv.Itoa(common.PreConsumedQuota)
 	common.OptionMap["ModelRequestRateLimitCount"] = strconv.Itoa(setting.ModelRequestRateLimitCount)
@@ -204,12 +210,30 @@ func InitOptionMap() {
 
 func loadOptionsFromDatabase() {
 	options, _ := AllOption()
+	affiliateTiersValue := ""
+	affiliateTiersFound := false
 	for _, option := range options {
+		if option.Key == "AffiliateCommissionTiers" {
+			affiliateTiersValue = option.Value
+			affiliateTiersFound = true
+			continue
+		}
 		err := updateOptionMap(option.Key, option.Value)
 		if err != nil {
 			common.SysLog("failed to update option map: " + err.Error())
 		}
 	}
+	if affiliateTiersFound {
+		common.OptionMap["AffiliateCommissionTiers"] = affiliateTiersValue
+		if err := common.UpdateAffiliateCommissionTiersByJSONString(common.OptionMap["AffiliateCommissionTiers"]); err != nil {
+			common.SysLog("failed to update affiliate commission tiers: " + err.Error())
+		}
+	} else {
+		common.SetAffiliateCommissionTiers(nil, common.AffiliateCommissionPercentage)
+		common.OptionMap["AffiliateCommissionTiers"] = common.AffiliateCommissionTiersToJSONString()
+	}
+	common.OptionMap["AffiliateCommissionPercentage"] = strconv.FormatFloat(common.AffiliateCommissionPercentage, 'f', -1, 64)
+	common.OptionMap["AffiliateCommissionTiers"] = common.AffiliateCommissionTiersToJSONString()
 }
 
 func SyncOptions(frequency int) {
@@ -343,6 +367,10 @@ func updateOptionMap(key string, value string) (err error) {
 			setting.DefaultUseAutoGroup = boolValue
 		case "ExposeRatioEnabled":
 			ratio_setting.SetExposeRatioEnabled(boolValue)
+		case "AffiliateTransferEnabled":
+			common.AffiliateTransferEnabled = boolValue
+		case "AffiliateWithdrawEnabled":
+			common.AffiliateWithdrawEnabled = boolValue
 		}
 	}
 	switch key {
@@ -501,6 +529,15 @@ func updateOptionMap(key string, value string) (err error) {
 		common.QuotaForInviter, _ = strconv.Atoi(value)
 	case "QuotaForInvitee":
 		common.QuotaForInvitee, _ = strconv.Atoi(value)
+	case "AffiliateCommissionPercentage":
+		common.AffiliateCommissionPercentage, _ = strconv.ParseFloat(value, 64)
+		common.SetAffiliateCommissionTiers(nil, common.AffiliateCommissionPercentage)
+		common.OptionMap["AffiliateCommissionTiers"] = common.AffiliateCommissionTiersToJSONString()
+	case "AffiliateCommissionTiers":
+		err = common.UpdateAffiliateCommissionTiersByJSONString(value)
+		common.OptionMap["AffiliateCommissionPercentage"] = strconv.FormatFloat(common.AffiliateCommissionPercentage, 'f', -1, 64)
+	case "AffiliateMinWithdrawQuota":
+		common.AffiliateMinWithdrawQuota, _ = strconv.Atoi(value)
 	case "QuotaRemindThreshold":
 		common.QuotaRemindThreshold, _ = strconv.Atoi(value)
 	case "PreConsumedQuota":
