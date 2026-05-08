@@ -33,7 +33,7 @@ type StripePayRequest struct {
 	// PaymentMethod specifies the payment method (e.g., "stripe").
 	PaymentMethod string `json:"payment_method"`
 	// SuccessURL is the optional custom URL to redirect after successful payment.
-	// If empty, defaults to the server's console log page.
+	// If empty, defaults to the server's console topup page.
 	SuccessURL string `json:"success_url,omitempty"`
 	// CancelURL is the optional custom URL to redirect when payment is canceled.
 	// If empty, defaults to the server's console topup page.
@@ -279,9 +279,18 @@ func fulfillOrder(ctx context.Context, event stripe.Event, referenceId string, c
 		return
 	}
 
+	actualMoney := 0.0
+	if totalCents, parseErr := strconv.ParseFloat(event.GetObjectValue("amount_total"), 64); parseErr == nil && totalCents > 0 {
+		actualMoney = totalCents / 100
+	}
+
 	err := model.Recharge(referenceId, customerId, callerIp)
 	if err != nil {
 		logger.LogError(ctx, fmt.Sprintf("Stripe 充值处理失败 trade_no=%s event_type=%s client_ip=%s error=%q", referenceId, string(event.Type), callerIp, err.Error()))
+		return
+	}
+	if _, err = model.SettleAffiliateCommissionByTradeNoWithPayMoney(referenceId, actualMoney); err != nil {
+		logger.LogError(ctx, fmt.Sprintf("Stripe affiliate commission settle failed trade_no=%s event_type=%s client_ip=%s error=%q", referenceId, string(event.Type), callerIp, err.Error()))
 		return
 	}
 
@@ -348,10 +357,10 @@ func genStripeLink(referenceId string, customerId string, email string, amount i
 
 	// Use custom URLs if provided, otherwise use defaults
 	if successURL == "" {
-		successURL = system_setting.ServerAddress + "/console/log"
+		successURL = system_setting.ServerAddress + "/console/topup?show_history=true&pay=success"
 	}
 	if cancelURL == "" {
-		cancelURL = system_setting.ServerAddress + "/console/topup"
+		cancelURL = system_setting.ServerAddress + "/console/topup?pay=cancelled"
 	}
 
 	params := &stripe.CheckoutSessionParams{
@@ -387,12 +396,12 @@ func genStripeLink(referenceId string, customerId string, email string, amount i
 }
 
 func GetChargedAmount(count float64, user model.User) float64 {
-	topUpGroupRatio := common.GetTopupGroupRatio(user.Group)
-	if topUpGroupRatio == 0 {
-		topUpGroupRatio = 1
+	topupGroupRatio := common.GetTopupGroupRatio(user.Group)
+	if topupGroupRatio == 0 {
+		topupGroupRatio = 1
 	}
 
-	return count * topUpGroupRatio
+	return count * topupGroupRatio
 }
 
 func getStripePayMoney(amount float64, group string) float64 {
