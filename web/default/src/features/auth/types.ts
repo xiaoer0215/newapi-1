@@ -20,6 +20,7 @@ export interface RegisterPayload {
   email?: string
   verification_code?: string
   aff?: string
+  aff_code?: string
   turnstile?: string
 }
 
@@ -115,6 +116,13 @@ export interface SystemStatus {
     server_address?: string
     docs_link?: string
     home_page_config?: string
+    overview_layout?: string
+    pricing_context_enabled?: boolean
+    pricing_max_output_enabled?: boolean
+    pricing_modalities_enabled?: boolean
+    pricing_knowledge_cutoff_enabled?: boolean
+    pricing_release_date_enabled?: boolean
+    pricing_capabilities_enabled?: boolean
     top_notice_enabled?: boolean
     top_notice_rotation_seconds?: number
     top_notice_items?: Array<Record<string, unknown>>
@@ -179,6 +187,13 @@ export interface SystemStatus {
   server_address?: string
   docs_link?: string
   home_page_config?: string
+  overview_layout?: string
+  pricing_context_enabled?: boolean
+  pricing_max_output_enabled?: boolean
+  pricing_modalities_enabled?: boolean
+  pricing_knowledge_cutoff_enabled?: boolean
+  pricing_release_date_enabled?: boolean
+  pricing_capabilities_enabled?: boolean
   top_notice_enabled?: boolean
   top_notice_rotation_seconds?: number
   top_notice_items?: Array<Record<string, unknown>>
