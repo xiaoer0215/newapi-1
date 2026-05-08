@@ -29,6 +29,15 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
+type RegisterRequest struct {
+	Username         string `json:"username" validate:"max=20"`
+	Password         string `json:"password" validate:"min=8,max=20"`
+	Email            string `json:"email" validate:"max=50"`
+	VerificationCode string `json:"verification_code"`
+	Aff              string `json:"aff"`
+	AffCode          string `json:"aff_code"`
+}
+
 func Login(c *gin.Context) {
 	if !common.PasswordLoginEnabled {
 		common.ApiErrorI18n(c, i18n.MsgUserPasswordLoginDisabled)
@@ -143,27 +152,27 @@ func Register(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserPasswordRegisterDisabled)
 		return
 	}
-	var user model.User
-	err := json.NewDecoder(c.Request.Body).Decode(&user)
+	var registerRequest RegisterRequest
+	err := common.DecodeJson(c.Request.Body, &registerRequest)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
 		return
 	}
-	if err := common.Validate.Struct(&user); err != nil {
+	if err := common.Validate.Struct(&registerRequest); err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUserInputInvalid, map[string]any{"Error": err.Error()})
 		return
 	}
 	if common.EmailVerificationEnabled {
-		if user.Email == "" || user.VerificationCode == "" {
+		if registerRequest.Email == "" || registerRequest.VerificationCode == "" {
 			common.ApiErrorI18n(c, i18n.MsgUserEmailVerificationRequired)
 			return
 		}
-		if !common.VerifyCodeWithKey(user.Email, user.VerificationCode, common.EmailVerificationPurpose) {
+		if !common.VerifyCodeWithKey(registerRequest.Email, registerRequest.VerificationCode, common.EmailVerificationPurpose) {
 			common.ApiErrorI18n(c, i18n.MsgUserVerificationCodeError)
 			return
 		}
 	}
-	exist, err := model.CheckUserExistOrDeleted(user.Username, user.Email)
+	exist, err := model.CheckUserExistOrDeleted(registerRequest.Username, registerRequest.Email)
 	if err != nil {
 		common.ApiErrorI18n(c, i18n.MsgDatabaseError)
 		common.SysLog(fmt.Sprintf("CheckUserExistOrDeleted error: %v", err))
@@ -173,30 +182,31 @@ func Register(c *gin.Context) {
 		common.ApiErrorI18n(c, i18n.MsgUserExists)
 		return
 	}
-	affCode := user.AffCode // this code is the inviter's code, not the user's own code
+	affCode := strings.TrimSpace(registerRequest.AffCode)
+	if affCode == "" {
+		affCode = strings.TrimSpace(registerRequest.Aff)
+	}
 	inviterId, _ := model.GetUserIdByAffCode(affCode)
 	cleanUser := model.User{
-		Username:    user.Username,
-		Password:    user.Password,
-		DisplayName: user.Username,
+		Username:    registerRequest.Username,
+		Password:    registerRequest.Password,
+		DisplayName: registerRequest.Username,
 		InviterId:   inviterId,
-		Role:        common.RoleCommonUser, // 明确设置角色为普通用户
+		Role:        common.RoleCommonUser,
 	}
 	if common.EmailVerificationEnabled {
-		cleanUser.Email = user.Email
+		cleanUser.Email = registerRequest.Email
 	}
 	if err := cleanUser.Insert(inviterId); err != nil {
 		common.ApiError(c, err)
 		return
 	}
 
-	// 获取插入后的用户ID
 	var insertedUser model.User
 	if err := model.DB.Where("username = ?", cleanUser.Username).First(&insertedUser).Error; err != nil {
 		common.ApiErrorI18n(c, i18n.MsgUserRegisterFailed)
 		return
 	}
-	// 生成默认令牌
 	if constant.GenerateDefaultToken {
 		key, err := common.GenerateKey()
 		if err != nil {
@@ -204,15 +214,14 @@ func Register(c *gin.Context) {
 			common.SysLog("failed to generate token key: " + err.Error())
 			return
 		}
-		// 生成默认令牌
 		token := model.Token{
-			UserId:             insertedUser.Id, // 使用插入后的用户ID
+			UserId:             insertedUser.Id,
 			Name:               cleanUser.Username + "的初始令牌",
 			Key:                key,
 			CreatedTime:        common.GetTimestamp(),
 			AccessedTime:       common.GetTimestamp(),
-			ExpiredTime:        -1,     // 永不过期
-			RemainQuota:        500000, // 示例额度
+			ExpiredTime:        -1,
+			RemainQuota:        500000,
 			UnlimitedQuota:     true,
 			ModelLimitsEnabled: false,
 		}
@@ -476,9 +485,10 @@ func generateDefaultSidebarConfig(userRole int) string {
 
 	// 个人中心区域 - 所有用户都可以访问
 	defaultConfig["personal"] = map[string]interface{}{
-		"enabled":  true,
-		"topup":    true,
-		"personal": true,
+		"enabled":   true,
+		"topup":     true,
+		"affiliate": true,
+		"personal":  true,
 	}
 
 	// 管理员区域 - 根据角色决定
