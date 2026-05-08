@@ -111,6 +111,7 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 
 	var quota float64
 	topUp := &TopUp{}
+	alreadyCompleted := false
 
 	refCol := "`trade_no`"
 	if common.UsingPostgreSQL {
@@ -125,6 +126,12 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 
 		if topUp.PaymentProvider != PaymentProviderStripe {
 			return ErrPaymentMethodMismatch
+		}
+
+		if topUp.Status == common.TopUpStatusSuccess {
+			alreadyCompleted = true
+			quota = topUp.Money * common.QuotaPerUnit
+			return nil
 		}
 
 		if topUp.Status != common.TopUpStatusPending {
@@ -152,7 +159,11 @@ func Recharge(referenceId string, customerId string, callerIp string) (err error
 		return errors.New("充值失败，请稍后重试")
 	}
 
-	RecordTopupLog(topUp.UserId, fmt.Sprintf("使用在线充值成功，充值金额: %v，支付金额：%d", logger.FormatQuota(int(quota)), topUp.Amount), callerIp, topUp.PaymentMethod, PaymentMethodStripe)
+	if alreadyCompleted {
+		return nil
+	}
+
+	RecordTopupLog(topUp.UserId, fmt.Sprintf("?????????????: %v??????%d", logger.FormatQuota(int(quota)), topUp.Amount), callerIp, topUp.PaymentMethod, PaymentMethodStripe)
 
 	return nil
 }
@@ -329,6 +340,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 	var quotaToAdd int
 	var payMoney float64
 	var paymentMethod string
+	alreadyCompleted := false
 
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		topUp := &TopUp{}
@@ -339,6 +351,7 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 
 		// 幂等处理：已成功直接返回
 		if topUp.Status == common.TopUpStatusSuccess {
+			alreadyCompleted = true
 			return nil
 		}
 
@@ -384,6 +397,10 @@ func ManualCompleteTopUp(tradeNo string, callerIp string) error {
 	}
 
 	// 事务外记录日志，避免阻塞
+	if alreadyCompleted {
+		return nil
+	}
+
 	RecordTopupLog(userId, fmt.Sprintf("管理员补单成功，充值金额: %v，支付金额：%f", logger.FormatQuota(quotaToAdd), payMoney), callerIp, paymentMethod, "admin")
 	return nil
 }
@@ -394,6 +411,7 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 
 	var quota int64
 	topUp := &TopUp{}
+	alreadyCompleted := false
 
 	refCol := "`trade_no`"
 	if common.UsingPostgreSQL {
@@ -408,6 +426,12 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 
 		if topUp.PaymentProvider != PaymentProviderCreem {
 			return ErrPaymentMethodMismatch
+		}
+
+		if topUp.Status == common.TopUpStatusSuccess {
+			alreadyCompleted = true
+			quota = topUp.Amount
+			return nil
 		}
 
 		if topUp.Status != common.TopUpStatusPending {
@@ -455,6 +479,10 @@ func RechargeCreem(referenceId string, customerEmail string, customerName string
 	if err != nil {
 		common.SysError("creem topup failed: " + err.Error())
 		return errors.New("充值失败，请稍后重试")
+	}
+
+	if alreadyCompleted {
+		return nil
 	}
 
 	RecordTopupLog(topUp.UserId, fmt.Sprintf("使用Creem充值成功，充值额度: %v，支付金额：%.2f", quota, topUp.Money), callerIp, topUp.PaymentMethod, PaymentMethodCreem)
