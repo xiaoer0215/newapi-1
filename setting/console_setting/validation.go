@@ -67,6 +67,8 @@ func ValidateConsoleSettings(settingsStr string, settingType string) error {
 	switch settingType {
 	case "ApiInfo":
 		return validateApiInfo(settingsStr)
+	case "OverviewLayout":
+		return validateOverviewLayout(settingsStr)
 	case "Announcements":
 		return validateAnnouncements(settingsStr)
 	case "TopNoticeItems":
@@ -78,6 +80,41 @@ func ValidateConsoleSettings(settingsStr string, settingType string) error {
 	default:
 		return fmt.Errorf("未知的设置类型：%s", settingType)
 	}
+}
+
+func validateOverviewLayout(layoutStr string) error {
+	list, err := parseJSONArray(layoutStr, "概览布局")
+	if err != nil {
+		return err
+	}
+
+	if len(list) > 10 {
+		return fmt.Errorf("概览布局项目数量不能超过10个")
+	}
+
+	validIDs := map[string]bool{
+		"api-info":       true,
+		"announcements":  true,
+		"contact-panels": true,
+		"faq":            true,
+	}
+	seen := make(map[string]bool)
+
+	for i, item := range list {
+		id, ok := item["id"].(string)
+		if !ok || strings.TrimSpace(id) == "" {
+			return fmt.Errorf("第%d个概览布局项目缺少 id 字段", i+1)
+		}
+		if !validIDs[id] {
+			return fmt.Errorf("第%d个概览布局项目的 id 不合法", i+1)
+		}
+		if seen[id] {
+			return fmt.Errorf("概览布局项目 %s 重复", id)
+		}
+		seen[id] = true
+	}
+
+	return nil
 }
 
 func validateApiInfo(apiInfoStr string) error {
