@@ -33,31 +33,36 @@ function ContactTile(
   return (
     <div
       className={cn(
-        'flex flex-col items-center gap-3 px-2 py-3 sm:px-4 sm:py-4',
-        props.index > 0 && 'border-border/60 border-t xl:border-t-0 xl:border-l'
+        'grid h-full min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] justify-items-center gap-2 overflow-hidden px-2 pb-3 pt-4 sm:px-3 sm:pb-3 sm:pt-4',
+        props.index > 0 && 'border-border/60 border-l'
       )}
     >
-      <div className='text-center text-sm font-medium'>
+      <div className='text-slate-900 line-clamp-2 text-center text-base font-semibold leading-6 dark:text-slate-100'>
         {props.title?.trim() || t('Contact QR')}
       </div>
-      <div className='flex min-h-36 min-w-36 items-center justify-center rounded-xl border bg-muted/20 p-3'>
-        {!imageError ? (
-          <img
-            src={props.image}
-            alt={props.title?.trim() || t('Contact QR')}
-            className='h-32 w-32 rounded-lg object-contain sm:h-36 sm:w-36'
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className='text-muted-foreground flex h-32 w-32 items-center justify-center text-sm sm:h-36 sm:w-36'>
-            {t('Image unavailable')}
-          </div>
-        )}
+      <div className='flex min-h-0 flex-1 items-center justify-center'>
+        <div className='flex aspect-square w-[clamp(9.5rem,70%,13.5rem)] items-center justify-center rounded-xl border bg-muted/15 p-2.5 sm:w-[clamp(10rem,64%,14rem)] sm:p-3'>
+          {!imageError ? (
+            <img
+              src={props.image}
+              alt={props.title?.trim() || t('Contact QR')}
+              className='h-full w-full rounded-md object-contain'
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className='text-muted-foreground flex h-full w-full items-center justify-center text-center text-[11px] leading-4 sm:text-xs'>
+              {t('Image unavailable')}
+            </div>
+          )}
+        </div>
       </div>
       {captionLines.length > 0 && (
-        <div className='space-y-1 text-center'>
+        <div className='max-w-[94%] space-y-0.5 text-center'>
           {captionLines.map((line, index) => (
-            <p key={`${line}-${index}`} className='text-muted-foreground text-xs'>
+            <p
+              key={`${line}-${index}`}
+              className='text-slate-900 text-sm font-medium leading-5 dark:text-slate-100'
+            >
               {line}
             </p>
           ))}
@@ -80,11 +85,13 @@ export function ContactPanelsPanel({ panels }: ContactPanelsPanelProps) {
           {t('Contact Us')}
         </span>
       }
+      height='h-72'
+      contentClassName='p-0 sm:p-0'
     >
       <div
         className={cn(
-          'flex flex-col',
-          panels.length > 1 && 'xl:grid xl:grid-cols-2'
+          'grid h-72 overflow-hidden',
+          panels.length > 1 ? 'grid-cols-2' : 'grid-cols-1'
         )}
       >
         {panels.map((panel, index) => (
