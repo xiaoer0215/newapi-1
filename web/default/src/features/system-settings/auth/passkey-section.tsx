@@ -3,6 +3,7 @@ import * as z from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -28,23 +29,29 @@ import { useResetForm } from '../hooks/use-reset-form'
 import { useUpdateOption } from '../hooks/use-update-option'
 
 const passkeySchema = z.object({
-  'passkey.enabled': z.boolean(),
-  'passkey.rp_display_name': z.string(),
-  'passkey.rp_id': z.string(),
-  'passkey.origins': z.string(),
-  'passkey.allow_insecure_origin': z.boolean(),
-  'passkey.user_verification': z.enum(['required', 'preferred', 'discouraged']),
-  'passkey.attachment_preference': z.enum([
-    'none',
-    'platform',
-    'cross-platform',
-  ]),
+  passkey: z.object({
+    enabled: z.boolean(),
+    rp_display_name: z.string(),
+    rp_id: z.string(),
+    origins: z.string(),
+    allow_insecure_origin: z.boolean(),
+    user_verification: z.enum(['required', 'preferred', 'discouraged']),
+    attachment_preference: z.enum(['none', 'platform', 'cross-platform']),
+  }),
 })
 
 type PasskeyFormValues = z.infer<typeof passkeySchema>
 
 interface PasskeySectionProps {
-  defaultValues: PasskeyFormValues
+  defaultValues: {
+    'passkey.enabled': boolean
+    'passkey.rp_display_name': string
+    'passkey.rp_id': string
+    'passkey.origins': string
+    'passkey.allow_insecure_origin': boolean
+    'passkey.user_verification': 'required' | 'preferred' | 'discouraged'
+    'passkey.attachment_preference': 'none' | 'platform' | 'cross-platform'
+  }
 }
 
 export function PasskeySection({ defaultValues }: PasskeySectionProps) {
@@ -53,18 +60,21 @@ export function PasskeySection({ defaultValues }: PasskeySectionProps) {
 
   const formDefaults = useMemo<PasskeyFormValues>(
     () => ({
-      ...defaultValues,
-      'passkey.origins': (defaultValues['passkey.origins'] as string)
-        .split(',')
-        .map((origin: string) => origin.trim())
-        .filter(Boolean)
-        .join('\n'),
-      'passkey.attachment_preference':
-        (defaultValues['passkey.attachment_preference'] as string) === ''
-          ? 'none'
-          : (defaultValues['passkey.attachment_preference'] as
-              | 'platform'
-              | 'cross-platform'),
+      passkey: {
+        enabled: defaultValues['passkey.enabled'],
+        rp_display_name: defaultValues['passkey.rp_display_name'] ?? '',
+        rp_id: defaultValues['passkey.rp_id'] ?? '',
+        origins: (defaultValues['passkey.origins'] ?? '')
+          .split(',')
+          .map((origin: string) => origin.trim())
+          .filter(Boolean)
+          .join('\n'),
+        allow_insecure_origin:
+          defaultValues['passkey.allow_insecure_origin'] ?? false,
+        user_verification: defaultValues['passkey.user_verification'],
+        attachment_preference:
+          defaultValues['passkey.attachment_preference'],
+      },
     }),
     [defaultValues]
   )
@@ -76,49 +86,35 @@ export function PasskeySection({ defaultValues }: PasskeySectionProps) {
 
   useResetForm(form, formDefaults)
 
-  const onSubmit = async () => {
-    const rawData = form.getValues() as Record<string, unknown>
-    const flattenedEntries: Array<
-      [keyof PasskeyFormValues, PasskeyFormValues[keyof PasskeyFormValues]]
-    > = []
+  const onSubmit = async (data: PasskeyFormValues) => {
+    const flattenedData = {
+      'passkey.enabled': data.passkey.enabled,
+      'passkey.rp_display_name': data.passkey.rp_display_name,
+      'passkey.rp_id': data.passkey.rp_id,
+      'passkey.origins': data.passkey.origins,
+      'passkey.allow_insecure_origin': data.passkey.allow_insecure_origin,
+      'passkey.user_verification': data.passkey.user_verification,
+      'passkey.attachment_preference': data.passkey.attachment_preference,
+    } as const
 
-    Object.entries(rawData).forEach(([key, value]) => {
-      if (key === 'passkey' && value && typeof value === 'object') {
-        Object.entries(value as Record<string, unknown>).forEach(
-          ([nestedKey, nestedValue]) => {
-            flattenedEntries.push([
-              `passkey.${nestedKey}` as keyof PasskeyFormValues,
-              nestedValue as PasskeyFormValues[keyof PasskeyFormValues],
-            ])
-          }
-        )
-      } else {
-        flattenedEntries.push([
-          key as keyof PasskeyFormValues,
-          value as PasskeyFormValues[keyof PasskeyFormValues],
-        ])
-      }
-    })
-
-    const data = Object.fromEntries(flattenedEntries) as PasskeyFormValues
     const updates: Array<{ key: string; value: string | boolean }> = []
 
-    Object.entries(data).forEach(([key, value]) => {
+    Object.entries(flattenedData).forEach(([key, value]) => {
       if (key === 'passkey.origins') {
         const processed = (value as string)
           .split('\n')
           .map((origin: string) => origin.trim())
           .filter(Boolean)
           .join(',')
-        const currentDefault = defaultValues['passkey.origins'] as string
+        const currentDefault = defaultValues['passkey.origins'] ?? ''
         if (processed !== currentDefault) {
           updates.push({ key, value: processed })
         }
-      } else if (key === 'passkey.attachment_preference') {
-        const attachmentPreference =
-          value as PasskeyFormValues['passkey.attachment_preference']
-        const incoming =
-          attachmentPreference === 'none' ? '' : attachmentPreference
+        return
+      }
+
+      if (key === 'passkey.attachment_preference') {
+        const incoming = value === 'none' ? '' : String(value)
         const currentDefault =
           defaultValues['passkey.attachment_preference'] === 'none'
             ? ''
@@ -126,14 +122,27 @@ export function PasskeySection({ defaultValues }: PasskeySectionProps) {
         if (incoming !== currentDefault) {
           updates.push({ key, value: incoming })
         }
-      } else if (value !== defaultValues[key as keyof PasskeyFormValues]) {
+        return
+      }
+
+      if (
+        value !==
+        defaultValues[key as keyof PasskeySectionProps['defaultValues']]
+      ) {
         updates.push({ key, value })
       }
     })
 
+    if (updates.length === 0) {
+      toast.info(t('No changes to save'))
+      return
+    }
+
     for (const update of updates) {
       await updateOption.mutateAsync(update)
     }
+
+    form.reset(data)
   }
 
   return (
@@ -327,7 +336,9 @@ export function PasskeySection({ defaultValues }: PasskeySectionProps) {
             )}
           />
 
-          <Button type='submit'>{t('Save Changes')}</Button>
+          <Button type='submit' disabled={updateOption.isPending}>
+            {updateOption.isPending ? t('Saving...') : t('Save Changes')}
+          </Button>
         </form>
       </Form>
     </SettingsSection>

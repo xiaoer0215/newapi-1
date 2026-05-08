@@ -7,6 +7,7 @@ import { ChevronDown, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Collapsible,
   CollapsibleContent,
@@ -53,6 +54,10 @@ import { useUpdateOption } from '@/features/system-settings/hooks/use-update-opt
 import { normalizeJsonString } from '@/features/system-settings/models/utils'
 import type { ModelSettings } from '@/features/system-settings/types'
 import { safeJsonParse } from '@/features/system-settings/utils/json-parser'
+import type {
+  Modality,
+  ModelCapability,
+} from '@/features/pricing/types'
 import { createModel, updateModel, getModel, getVendors } from '../../api'
 import { getNameRuleOptions, ENDPOINT_TEMPLATES } from '../../constants'
 import { modelsQueryKeys, vendorsQueryKeys, parseModelTags } from '../../lib'
@@ -70,6 +75,14 @@ const extendedModelFormSchema = z.object({
   name_rule: z.number(),
   status: z.boolean(),
   sync_official: z.boolean(),
+  context_length: z.string().optional(),
+  max_output_tokens: z.string().optional(),
+  knowledge_cutoff: z.string().optional(),
+  release_date: z.string().optional(),
+  parameter_count: z.string().optional(),
+  input_modalities: z.array(z.string()).default([]),
+  output_modalities: z.array(z.string()).default([]),
+  capabilities: z.array(z.string()).default([]),
   price: z.string().optional(),
   ratio: z.string().optional(),
   cacheRatio: z.string().optional(),
@@ -79,10 +92,46 @@ const extendedModelFormSchema = z.object({
   audioCompletionRatio: z.string().optional(),
 })
 
-type ExtendedModelFormValues = z.infer<typeof extendedModelFormSchema>
+type ExtendedModelFormValues = z.input<typeof extendedModelFormSchema>
 
 type PricingMode = 'per-token' | 'per-request'
 type PricingSubMode = 'ratio' | 'price'
+
+const MODALITY_OPTIONS: Array<{ value: Modality; label: string }> = [
+  { value: 'text', label: 'Text' },
+  { value: 'image', label: 'Image' },
+  { value: 'audio', label: 'Audio' },
+  { value: 'video', label: 'Video' },
+  { value: 'file', label: 'File' },
+]
+
+const CAPABILITY_OPTIONS: Array<{ value: ModelCapability; label: string }> = [
+  { value: 'function_calling', label: 'Function calling' },
+  { value: 'streaming', label: 'Streaming' },
+  { value: 'vision', label: 'Vision' },
+  { value: 'json_mode', label: 'JSON mode' },
+  { value: 'structured_output', label: 'Structured output' },
+  { value: 'reasoning', label: 'Reasoning' },
+  { value: 'tools', label: 'Tools' },
+  { value: 'system_prompt', label: 'System prompt' },
+  { value: 'web_search', label: 'Web search' },
+  { value: 'code_interpreter', label: 'Code interpreter' },
+  { value: 'caching', label: 'Prompt caching' },
+  { value: 'embeddings', label: 'Embeddings' },
+]
+
+function toggleStringValue(items: string[] = [], value: string): string[] {
+  return items.includes(value)
+    ? items.filter((item) => item !== value)
+    : [...items, value]
+}
+
+function parseOptionalInteger(value?: string): number | undefined {
+  const normalized = value?.trim()
+  if (!normalized) return undefined
+  const parsed = Number.parseInt(normalized, 10)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
 
 type ModelMutateDrawerProps = {
   open: boolean
@@ -185,6 +234,14 @@ export function ModelMutateDrawer({
       name_rule: 0,
       status: true,
       sync_official: true,
+      context_length: '',
+      max_output_tokens: '',
+      knowledge_cutoff: '',
+      release_date: '',
+      parameter_count: '',
+      input_modalities: [],
+      output_modalities: [],
+      capabilities: [],
       price: '',
       ratio: '',
       cacheRatio: '',
@@ -198,6 +255,11 @@ export function ModelMutateDrawer({
   const validateNumber = (value: string) => {
     if (value === '') return true
     return !isNaN(parseFloat(value))
+  }
+
+  const validateInteger = (value: string) => {
+    if (value === '') return true
+    return /^\d+$/.test(value)
   }
 
   const handlePromptPriceChange = (value: string) => {
@@ -244,6 +306,18 @@ export function ModelMutateDrawer({
         name_rule: model.name_rule || 0,
         status: model.status === 1,
         sync_official: model.sync_official === 1,
+        context_length:
+          model.context_length != null ? String(model.context_length) : '',
+        max_output_tokens:
+          model.max_output_tokens != null
+            ? String(model.max_output_tokens)
+            : '',
+        knowledge_cutoff: model.knowledge_cutoff || '',
+        release_date: model.release_date || '',
+        parameter_count: model.parameter_count || '',
+        input_modalities: model.input_modalities || [],
+        output_modalities: model.output_modalities || [],
+        capabilities: model.capabilities || [],
         price: '',
         ratio: '',
         cacheRatio: '',
@@ -348,6 +422,14 @@ export function ModelMutateDrawer({
         name_rule: 0,
         status: true,
         sync_official: true,
+        context_length: '',
+        max_output_tokens: '',
+        knowledge_cutoff: '',
+        release_date: '',
+        parameter_count: '',
+        input_modalities: [],
+        output_modalities: [],
+        capabilities: [],
         price: '',
         ratio: '',
         cacheRatio: '',
@@ -369,6 +451,14 @@ export function ModelMutateDrawer({
           tags: Array.isArray(values.tags) ? values.tags.join(',') : '',
           status: values.status ? 1 : 0,
           sync_official: values.sync_official ? 1 : 0,
+          context_length: parseOptionalInteger(values.context_length),
+          max_output_tokens: parseOptionalInteger(values.max_output_tokens),
+          knowledge_cutoff: values.knowledge_cutoff?.trim() || undefined,
+          release_date: values.release_date?.trim() || undefined,
+          parameter_count: values.parameter_count?.trim() || undefined,
+          input_modalities: values.input_modalities ?? [],
+          output_modalities: values.output_modalities ?? [],
+          capabilities: values.capabilities ?? [],
         }
 
         // Remove ratio fields from model data (they're stored in system settings)
@@ -569,6 +659,7 @@ export function ModelMutateDrawer({
               : 'Model created successfully'
           )
           queryClient.invalidateQueries({ queryKey: modelsQueryKeys.lists() })
+          queryClient.invalidateQueries({ queryKey: ['pricing'] })
           queryClient.invalidateQueries({ queryKey: ['system-options'] })
           onOpenChange(false)
         } else {
@@ -619,9 +710,7 @@ export function ModelMutateDrawer({
         <Form {...form}>
           <form
             id='model-form'
-            onSubmit={form.handleSubmit(
-              onSubmit as Parameters<typeof form.handleSubmit>[0]
-            )}
+            onSubmit={form.handleSubmit(onSubmit)}
             className='flex-1 space-y-4 overflow-y-auto px-3 py-3 pb-4 sm:space-y-6 sm:px-4'
           >
             {/* Basic Information */}
@@ -1176,6 +1265,243 @@ export function ModelMutateDrawer({
                   </Collapsible>
                 </>
               )}
+            </div>
+
+            <Separator />
+
+            {/* Model Metadata */}
+            <div className='space-y-4'>
+              <div className='space-y-1'>
+                <h3 className='text-sm font-semibold'>{t('Model Metadata')}</h3>
+                <p className='text-muted-foreground text-sm'>
+                  {t(
+                    'Override pricing detail metadata for this model. Leave blank to fall back to automatic inference.'
+                  )}
+                </p>
+              </div>
+
+              <div className='grid gap-4 md:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='context_length'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Context length')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='128000'
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            if (validateInteger(value)) {
+                              field.onChange(value)
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Maximum tokens accepted in a single request window.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='max_output_tokens'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Max output tokens')}</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='16384'
+                          {...field}
+                          onChange={(e) => {
+                            const value = e.target.value
+                            if (validateInteger(value)) {
+                              field.onChange(value)
+                            }
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        {t(
+                          'Maximum tokens returned in a single response.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='knowledge_cutoff'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Knowledge cutoff')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder='2023-12' {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        {t('Examples: 2023-12, 2024-05-15')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='release_date'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Release date')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder='2024-05-15' {...field} />
+                      </FormControl>
+                      <FormDescription>{t('YYYY-MM or YYYY-MM-DD')}</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='parameter_count'
+                  render={({ field }) => (
+                    <FormItem className='md:col-span-2'>
+                      <FormLabel>{t('Parameter count')}</FormLabel>
+                      <FormControl>
+                        <Input placeholder='70B' {...field} />
+                      </FormControl>
+                      <FormDescription>{t('Example: 70B')}</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className='grid gap-4 xl:grid-cols-2'>
+                <FormField
+                  control={form.control}
+                  name='input_modalities'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Input modalities')}</FormLabel>
+                      <div className='grid gap-2 rounded-lg border p-3 sm:grid-cols-2'>
+                        {MODALITY_OPTIONS.map((option) => {
+                          const checked = field.value?.includes(option.value)
+                          return (
+                            <label
+                              key={`input-${option.value}`}
+                              className='flex items-center gap-2 text-sm'
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() =>
+                                  field.onChange(
+                                    toggleStringValue(
+                                      field.value ?? [],
+                                      option.value
+                                    )
+                                  )
+                                }
+                              />
+                              <span>{t(option.label)}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                      <FormDescription>
+                        {t('Supported inputs for this model.')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='output_modalities'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('Output modalities')}</FormLabel>
+                      <div className='grid gap-2 rounded-lg border p-3 sm:grid-cols-2'>
+                        {MODALITY_OPTIONS.map((option) => {
+                          const checked = field.value?.includes(option.value)
+                          return (
+                            <label
+                              key={`output-${option.value}`}
+                              className='flex items-center gap-2 text-sm'
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() =>
+                                  field.onChange(
+                                    toggleStringValue(
+                                      field.value ?? [],
+                                      option.value
+                                    )
+                                  )
+                                }
+                              />
+                              <span>{t(option.label)}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                      <FormDescription>
+                        {t('Supported outputs for this model.')}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name='capabilities'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Capabilities')}</FormLabel>
+                    <div className='grid gap-2 rounded-lg border p-3 sm:grid-cols-2 xl:grid-cols-3'>
+                      {CAPABILITY_OPTIONS.map((option) => {
+                        const checked = field.value?.includes(option.value)
+                        return (
+                          <label
+                            key={option.value}
+                            className='flex items-center gap-2 text-sm'
+                          >
+                            <Checkbox
+                              checked={checked}
+                              onCheckedChange={() =>
+                                field.onChange(
+                                  toggleStringValue(
+                                    field.value ?? [],
+                                    option.value
+                                  )
+                                )
+                              }
+                            />
+                            <span>{t(option.label)}</span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                    <FormDescription>
+                      {t(
+                        'Capability tags shown on the pricing detail page.'
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <Separator />

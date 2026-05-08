@@ -643,10 +643,7 @@ export function ModelRatioDialog({
                 {t('Cancel')}
               </Button>
               <Button
-                type='button'
-                onClick={() => {
-                  void form.handleSubmit(handleSubmit)()
-                }}
+                type='submit'
               >
                 {isEditMode ? t('Update') : t('Add')}
               </Button>

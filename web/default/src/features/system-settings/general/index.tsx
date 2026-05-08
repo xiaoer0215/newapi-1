@@ -26,6 +26,13 @@ const defaultGeneralSettings: GeneralSettings = {
   PreConsumedQuota: 0,
   QuotaForInviter: 0,
   QuotaForInvitee: 0,
+  AffiliateCommissionPercentage: 0,
+  AffiliateCommissionTiers:
+    '[{"level":1,"min_invites":0,"percentage":0},{"level":2,"min_invites":10,"percentage":0},{"level":3,"min_invites":30,"percentage":0},{"level":4,"min_invites":100,"percentage":0}]',
+  AffiliateTransferEnabled: true,
+  AffiliateWithdrawEnabled: true,
+  AffiliateMinWithdrawQuota: 500000,
+  AffiliateWithdrawNotice: '',
   TopUpLink: '',
   'general_setting.docs_link': '',
   'quota_setting.enable_free_model_pre_consume': true,

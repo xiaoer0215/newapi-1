@@ -605,12 +605,10 @@ export function ApiKeysMutateDrawer({
             </Button>
           </SheetClose>
           <Button
-            type='button'
+            form='api-key-form'
+            type='submit'
             disabled={isSubmitting}
             className='w-full sm:w-auto'
-            onClick={() => {
-              void form.handleSubmit(onSubmit)()
-            }}
           >
             {isSubmitting ? t('Saving...') : t('Save changes')}
           </Button>

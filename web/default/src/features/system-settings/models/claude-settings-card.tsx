@@ -152,6 +152,20 @@ export function ClaudeSettingsCard({ defaultValues }: ClaudeSettingsCardProps) {
     for (const key of updates) {
       await updateOption.mutateAsync({ key, value: normalized[key] })
     }
+
+    normalizedDefaultsRef.current = normalized
+    form.reset(
+      buildFormDefaults({
+        claude: {
+          model_headers_settings: normalized['claude.model_headers_settings'],
+          default_max_tokens: normalized['claude.default_max_tokens'],
+          thinking_adapter_enabled:
+            normalized['claude.thinking_adapter_enabled'],
+          thinking_adapter_budget_tokens_percentage:
+            normalized['claude.thinking_adapter_budget_tokens_percentage'],
+        },
+      })
+    )
   }
 
   return (

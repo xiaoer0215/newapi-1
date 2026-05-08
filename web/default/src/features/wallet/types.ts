@@ -23,6 +23,17 @@ export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse
+export type AffiliateSummaryResponse = ApiResponse<AffiliateSummary>
+export type AffiliateRecordsResponse = ApiResponse<AffiliateRecordList>
+export type AffiliateInviteesResponse = ApiResponse<AffiliateInviteeList>
+export type AffiliateWithdrawResponse = ApiResponse<AffiliateWithdrawal>
+export type AffiliateWithdrawalsResponse = ApiResponse<AffiliateWithdrawalList>
+export type AdminAffiliateInviteRelationsResponse =
+  ApiResponse<AffiliateInviteeList>
+export type AdminAffiliateCommissionRecordsResponse =
+  ApiResponse<AdminAffiliateCommissionRecordList>
+export type AdminAffiliateWithdrawalsResponse =
+  ApiResponse<AffiliateWithdrawalList>
 export type CreemPaymentResponse = ApiResponse<{ checkout_url: string }>
 export type WaffoPaymentResponse = ApiResponse<
   { payment_url?: string } | string
@@ -189,6 +200,103 @@ export interface AmountRequest {
 export interface AffiliateTransferRequest {
   /** Quota amount to transfer */
   quota: number
+}
+
+export interface AffiliateWithdrawRequest {
+  amount: number
+  account_type: string
+  account_no: string
+  account_name?: string
+  note?: string
+}
+
+export interface AffiliateCommissionTier {
+  level: number
+  min_invites: number
+  percentage: number
+}
+
+export interface AffiliateSummary {
+  aff_code: string
+  aff_count: number
+  aff_quota: number
+  aff_history_quota: number
+  affiliate_commission_percentage: number
+  affiliate_commission_tiers: AffiliateCommissionTier[]
+  current_affiliate_tier: AffiliateCommissionTier
+  next_affiliate_tier?: AffiliateCommissionTier
+  current_affiliate_level: number
+  remaining_invites_for_next_level: number
+  affiliate_transfer_enabled: boolean
+  affiliate_withdraw_enabled: boolean
+  affiliate_min_withdraw_quota: number
+  affiliate_withdraw_notice?: string
+}
+
+export interface AffiliateRecord {
+  id: number
+  user_id: number
+  inviter_id: number
+  top_up_id: number
+  trade_no: string
+  top_up_quota: number
+  commission_quota: number
+  commission_percentage_snapshot: number
+  created_at: number
+}
+
+export interface AdminAffiliateRecord extends AffiliateRecord {
+  user_username?: string
+  user_display_name?: string
+  inviter_username?: string
+  inviter_display_name?: string
+}
+
+export interface AffiliateRecordList {
+  items: AffiliateRecord[]
+  total: number
+}
+
+export interface AffiliateInvitee {
+  inviter_id: number
+  inviter_username?: string
+  inviter_display_name?: string
+  invitee_id: number
+  invitee_username: string
+  invitee_display_name?: string
+  invitee_email?: string
+  created_at: number
+}
+
+export interface AffiliateInviteeList {
+  items: AffiliateInvitee[]
+  total: number
+}
+
+export interface AffiliateWithdrawal {
+  id: number
+  user_id: number
+  amount: number
+  status: 'pending' | 'approved' | 'rejected' | 'paid'
+  account_type: string
+  account_no: string
+  account_name?: string
+  note?: string
+  review_note?: string
+  reviewer_id?: number
+  processed_at?: number
+  created_at: number
+  updated_at: number
+}
+
+export interface AffiliateWithdrawalList {
+  items: AffiliateWithdrawal[]
+  total: number
+}
+
+export interface AdminAffiliateCommissionRecordList {
+  items: AdminAffiliateRecord[]
+  total: number
 }
 
 /**

@@ -130,11 +130,21 @@ export function Playground() {
       const index = messages.findIndex((m) => m.key === editingMessageKey)
       if (index === -1) return
 
-      const updated = messages.map((m) =>
-        m.key === editingMessageKey
-          ? { ...m, versions: [{ ...m.versions[0], content: newContent }] }
-          : m
-      )
+      const updated = messages.map((m) => {
+        if (m.key !== editingMessageKey) {
+          return m
+        }
+
+        const baseVersion =
+          Array.isArray(m.versions) && m.versions.length > 0
+            ? m.versions[0]
+            : { id: 'default', content: '' }
+
+        return {
+          ...m,
+          versions: [{ ...baseVersion, content: newContent }],
+        }
+      })
 
       setEditingMessageKey(null)
 

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+﻿import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PublicLayout } from '@/components/layout'
 import { PageTransition } from '@/components/page-transition'
@@ -153,8 +153,8 @@ export function Pricing() {
           }}
         />
         <PageTransition className='relative mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
-          <header className='mx-auto mb-5 max-w-3xl pt-5 text-center sm:mb-10 sm:pt-10'>
-            <p className='text-muted-foreground mb-3 text-xs font-medium tracking-widest uppercase'>
+          <header className='mx-auto mb-6 max-w-3xl pt-5 text-center sm:mb-10 sm:pt-10'>
+            <p className='text-muted-foreground mb-3 text-xs font-medium tracking-[0.28em] uppercase'>
               {t('Models Directory')}
             </p>
             <h1 className='text-[clamp(2rem,5.5vw,3.5rem)] leading-[1.15] font-bold tracking-tight'>
@@ -175,11 +175,11 @@ export function Pricing() {
               onChange={setSearchInput}
               onClear={clearSearch}
               placeholder={t('Search model name, provider, endpoint, or tag...')}
-              className='mx-auto mt-4 max-w-2xl sm:mt-6'
+              className='mx-auto mt-5 max-w-2xl sm:mt-6'
             />
           </header>
 
-          <div className='grid gap-4 xl:grid-cols-[330px_minmax(0,1fr)] 2xl:grid-cols-[330px_minmax(0,1fr)]'>
+          <div className='grid items-start gap-5 xl:grid-cols-[330px_minmax(0,1fr)]'>
             <PricingSidebar
               quotaTypeFilter={quotaTypeFilter}
               endpointTypeFilter={endpointTypeFilter}
@@ -198,10 +198,10 @@ export function Pricing() {
               models={models || []}
               hasActiveFilters={hasActiveFilters}
               onClearFilters={clearFilters}
-              className='sticky top-20 hidden max-h-[calc(100vh-6rem)] overflow-y-auto xl:block'
+              className='hover-scrollbar sticky top-4 hidden max-h-[calc(100dvh-2rem)] self-start overflow-y-auto xl:block'
             />
 
-            <main className='min-w-0 space-y-4'>
+            <main className='min-w-0 space-y-5'>
               <PricingToolbar
                 filteredCount={filteredModels.length}
                 totalCount={models?.length}

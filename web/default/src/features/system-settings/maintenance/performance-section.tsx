@@ -45,20 +45,16 @@ import { useResetForm } from '../hooks/use-reset-form'
 import { useUpdateOption } from '../hooks/use-update-option'
 
 const perfSchema = z.object({
-  'performance_setting.disk_cache_enabled': z.boolean(),
-  'performance_setting.disk_cache_threshold_mb': z.coerce.number().min(1),
-  'performance_setting.disk_cache_max_size_mb': z.coerce.number().min(100),
-  'performance_setting.disk_cache_path': z.string().optional(),
-  'performance_setting.monitor_enabled': z.boolean(),
-  'performance_setting.monitor_cpu_threshold': z.coerce.number().min(0),
-  'performance_setting.monitor_memory_threshold': z.coerce
-    .number()
-    .min(0)
-    .max(100),
-  'performance_setting.monitor_disk_threshold': z.coerce
-    .number()
-    .min(0)
-    .max(100),
+  performance_setting: z.object({
+    disk_cache_enabled: z.boolean(),
+    disk_cache_threshold_mb: z.coerce.number().min(1),
+    disk_cache_max_size_mb: z.coerce.number().min(100),
+    disk_cache_path: z.string().optional(),
+    monitor_enabled: z.boolean(),
+    monitor_cpu_threshold: z.coerce.number().min(0),
+    monitor_memory_threshold: z.coerce.number().min(0).max(100),
+    monitor_disk_threshold: z.coerce.number().min(0).max(100),
+  }),
 })
 
 type PerfFormValues = z.infer<typeof perfSchema>
@@ -75,7 +71,16 @@ function formatBytes(bytes: number, decimals = 2): string {
 }
 
 interface Props {
-  defaultValues: PerfFormValues
+  defaultValues: {
+    'performance_setting.disk_cache_enabled': boolean
+    'performance_setting.disk_cache_threshold_mb': number
+    'performance_setting.disk_cache_max_size_mb': number
+    'performance_setting.disk_cache_path': string
+    'performance_setting.monitor_enabled': boolean
+    'performance_setting.monitor_cpu_threshold': number
+    'performance_setting.monitor_memory_threshold': number
+    'performance_setting.monitor_disk_threshold': number
+  }
 }
 
 type LogInfo = {
@@ -123,6 +128,25 @@ type PerformanceStats = {
 export function PerformanceSection(props: Props) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
+  const formDefaults: PerfFormValues = {
+    performance_setting: {
+      disk_cache_enabled:
+        props.defaultValues['performance_setting.disk_cache_enabled'],
+      disk_cache_threshold_mb:
+        props.defaultValues['performance_setting.disk_cache_threshold_mb'],
+      disk_cache_max_size_mb:
+        props.defaultValues['performance_setting.disk_cache_max_size_mb'],
+      disk_cache_path:
+        props.defaultValues['performance_setting.disk_cache_path'] ?? '',
+      monitor_enabled: props.defaultValues['performance_setting.monitor_enabled'],
+      monitor_cpu_threshold:
+        props.defaultValues['performance_setting.monitor_cpu_threshold'],
+      monitor_memory_threshold:
+        props.defaultValues['performance_setting.monitor_memory_threshold'],
+      monitor_disk_threshold:
+        props.defaultValues['performance_setting.monitor_disk_threshold'],
+    },
+  }
   const [stats, setStats] = useState<PerformanceStats | null>(null)
   const [logInfo, setLogInfo] = useState<LogInfo | null>(null)
   const [logCleanupMode, setLogCleanupMode] = useState('by_count')
@@ -132,11 +156,11 @@ export function PerformanceSection(props: Props) {
   const form = useForm<PerfFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(perfSchema) as any,
-    defaultValues: props.defaultValues,
+    defaultValues: formDefaults,
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useResetForm(form as any, props.defaultValues)
+  useResetForm(form as any, formDefaults)
 
   const fetchStats = useCallback(async () => {
     try {
@@ -162,10 +186,28 @@ export function PerformanceSection(props: Props) {
   }, [fetchStats, fetchLogInfo])
 
   const onSubmit = async (data: PerfFormValues) => {
-    const entries = Object.entries(data) as [string, unknown][]
-    const updates = entries.filter(
+    const flattenedData = {
+      'performance_setting.disk_cache_enabled':
+        data.performance_setting.disk_cache_enabled,
+      'performance_setting.disk_cache_threshold_mb':
+        data.performance_setting.disk_cache_threshold_mb,
+      'performance_setting.disk_cache_max_size_mb':
+        data.performance_setting.disk_cache_max_size_mb,
+      'performance_setting.disk_cache_path':
+        data.performance_setting.disk_cache_path ?? '',
+      'performance_setting.monitor_enabled':
+        data.performance_setting.monitor_enabled,
+      'performance_setting.monitor_cpu_threshold':
+        data.performance_setting.monitor_cpu_threshold,
+      'performance_setting.monitor_memory_threshold':
+        data.performance_setting.monitor_memory_threshold,
+      'performance_setting.monitor_disk_threshold':
+        data.performance_setting.monitor_disk_threshold,
+    } as const
+    const updates = Object.entries(flattenedData).filter(
       ([key, value]) =>
-        value !== (props.defaultValues[key as keyof PerfFormValues] as unknown)
+        value !==
+        props.defaultValues[key as keyof Props['defaultValues']]
     )
     if (updates.length === 0) {
       toast.info(t('No changes to save'))
@@ -178,6 +220,7 @@ export function PerformanceSection(props: Props) {
       })
     }
     toast.success(t('Saved successfully'))
+    form.reset(data)
     fetchStats()
   }
 

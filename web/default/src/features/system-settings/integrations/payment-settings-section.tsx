@@ -158,6 +158,16 @@ export function PaymentSettingsSection({
     })
   }, [defaultsSignature, form])
 
+  const mergeInitialValues = React.useCallback(
+    (partial: Partial<PaymentFormValues>) => {
+      initialRef.current = {
+        ...initialRef.current,
+        ...partial,
+      }
+    },
+    []
+  )
+
   const saveGeneralSettings = async () => {
     const values = form.getValues()
     const sanitized = {
@@ -220,6 +230,14 @@ export function PaymentSettingsSection({
     for (const update of updates) {
       await updateOption.mutateAsync(update)
     }
+
+    mergeInitialValues({
+      Price: sanitized.Price,
+      MinTopUp: sanitized.MinTopUp,
+      PayMethods: sanitized.PayMethods,
+      AmountOptions: sanitized.AmountOptions,
+      AmountDiscount: sanitized.AmountDiscount,
+    })
   }
 
   const saveEpaySettings = async () => {
@@ -268,6 +286,13 @@ export function PaymentSettingsSection({
     for (const update of updates) {
       await updateOption.mutateAsync(update)
     }
+
+    mergeInitialValues({
+      PayAddress: sanitized.PayAddress,
+      EpayId: sanitized.EpayId,
+      EpayKey: sanitized.EpayKey || initialRef.current.EpayKey,
+      CustomCallbackAddress: sanitized.CustomCallbackAddress,
+    })
   }
 
   const saveStripeSettings = async () => {
@@ -340,6 +365,17 @@ export function PaymentSettingsSection({
     for (const update of updates) {
       await updateOption.mutateAsync(update)
     }
+
+    mergeInitialValues({
+      StripeApiSecret:
+        sanitized.StripeApiSecret || initialRef.current.StripeApiSecret,
+      StripeWebhookSecret:
+        sanitized.StripeWebhookSecret || initialRef.current.StripeWebhookSecret,
+      StripePriceId: sanitized.StripePriceId,
+      StripeUnitPrice: sanitized.StripeUnitPrice,
+      StripeMinTopUp: sanitized.StripeMinTopUp,
+      StripePromotionCodesEnabled: sanitized.StripePromotionCodesEnabled,
+    })
   }
 
   const saveCreemSettings = async () => {
@@ -395,6 +431,14 @@ export function PaymentSettingsSection({
     for (const update of updates) {
       await updateOption.mutateAsync(update)
     }
+
+    mergeInitialValues({
+      CreemApiKey: sanitized.CreemApiKey || initialRef.current.CreemApiKey,
+      CreemWebhookSecret:
+        sanitized.CreemWebhookSecret || initialRef.current.CreemWebhookSecret,
+      CreemTestMode: sanitized.CreemTestMode,
+      CreemProducts: sanitized.CreemProducts,
+    })
   }
 
   const onSubmit = async (values: PaymentFormValues) => {
@@ -534,6 +578,28 @@ export function PaymentSettingsSection({
 
     for (const update of updates) {
       await updateOption.mutateAsync(update)
+    }
+
+    if (updates.length > 0) {
+      mergeInitialValues({
+        PayAddress: sanitized.PayAddress,
+        EpayId: sanitized.EpayId,
+        EpayKey: sanitized.EpayKey || initialRef.current.EpayKey,
+        Price: sanitized.Price,
+        MinTopUp: sanitized.MinTopUp,
+        CustomCallbackAddress: sanitized.CustomCallbackAddress,
+        PayMethods: sanitized.PayMethods,
+        AmountOptions: sanitized.AmountOptions,
+        AmountDiscount: sanitized.AmountDiscount,
+        StripeApiSecret:
+          sanitized.StripeApiSecret || initialRef.current.StripeApiSecret,
+        StripeWebhookSecret:
+          sanitized.StripeWebhookSecret || initialRef.current.StripeWebhookSecret,
+        StripePriceId: sanitized.StripePriceId,
+        StripeUnitPrice: sanitized.StripeUnitPrice,
+        StripeMinTopUp: sanitized.StripeMinTopUp,
+        StripePromotionCodesEnabled: sanitized.StripePromotionCodesEnabled,
+      })
     }
   }
 

@@ -1,4 +1,5 @@
 import { Copy, Check, RefreshCw, Edit, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -28,19 +29,21 @@ export function MessageActions({
   alwaysVisible = false,
   className = '',
 }: MessageActionsProps) {
+  const { t } = useTranslation()
   const { copiedText, copyToClipboard } = useCopyToClipboard()
   const { guardAction } = useMessageActionGuard(isGenerating)
 
   const isAssistant = message.from === 'assistant'
-  const hasContent = message.versions.some((v) => v.content)
+  const versions = Array.isArray(message.versions) ? message.versions : []
+  const hasContent = versions.some((v) => v?.content)
   const isLoading =
     message.status === 'loading' || message.status === 'streaming'
-  const content = message.versions[0]?.content || ''
+  const content = versions[0]?.content || ''
   const isCopied = copiedText === content
 
   const handleCopy = () => {
     if (!content) {
-      toast.warning(MESSAGE_ACTION_LABELS.NO_CONTENT)
+      toast.warning(t(MESSAGE_ACTION_LABELS.NO_CONTENT))
       return
     }
     copyToClipboard(content)
@@ -66,8 +69,8 @@ export function MessageActions({
             icon={isCopied ? Check : Copy}
             label={
               isCopied
-                ? MESSAGE_ACTION_LABELS.COPIED
-                : MESSAGE_ACTION_LABELS.COPY
+                ? t(MESSAGE_ACTION_LABELS.COPIED)
+                : t(MESSAGE_ACTION_LABELS.COPY)
             }
             onClick={handleCopy}
             className={isCopied ? 'text-green-600' : ''}
@@ -78,7 +81,7 @@ export function MessageActions({
         {isAssistant && !isLoading && onRegenerate && (
           <MessageActionButton
             icon={RefreshCw}
-            label={MESSAGE_ACTION_LABELS.REGENERATE}
+            label={t(MESSAGE_ACTION_LABELS.REGENERATE)}
             onClick={handleRegenerate}
             disabled={isGenerating}
           />
@@ -88,7 +91,7 @@ export function MessageActions({
         {hasContent && onEdit && (
           <MessageActionButton
             icon={Edit}
-            label={MESSAGE_ACTION_LABELS.EDIT}
+            label={t(MESSAGE_ACTION_LABELS.EDIT)}
             onClick={handleEdit}
             disabled={isGenerating}
           />
@@ -98,7 +101,7 @@ export function MessageActions({
         {onDelete && (
           <MessageActionButton
             icon={Trash2}
-            label={MESSAGE_ACTION_LABELS.DELETE}
+            label={t(MESSAGE_ACTION_LABELS.DELETE)}
             onClick={handleDelete}
             disabled={isGenerating}
             variant='destructive'

@@ -38,6 +38,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -469,16 +470,18 @@ export function ApiInfoSection({ enabled, data }: ApiInfoSectionProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {colorOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className='flex items-center gap-2'>
-                              <div
-                                className={`h-4 w-4 rounded-full ${option.bgClass}`}
-                              />
-                              {option.label}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectGroup>
+                          {colorOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className='flex items-center gap-2'>
+                                <div
+                                  className={`h-4 w-4 rounded-full ${option.bgClass}`}
+                                />
+                                {option.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                     <FormDescription>

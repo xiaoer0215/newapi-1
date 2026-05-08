@@ -1,6 +1,6 @@
 import type { MaintenanceSettings } from '../types'
 
-export type HeaderNavPricingConfig = {
+export type HeaderNavAccessConfig = {
   enabled: boolean
   requireAuth: boolean
 }
@@ -8,10 +8,11 @@ export type HeaderNavPricingConfig = {
 export type HeaderNavModulesConfig = {
   home: boolean
   console: boolean
-  pricing: HeaderNavPricingConfig
+  pricing: HeaderNavAccessConfig
+  rankings: HeaderNavAccessConfig
   docs: boolean
   about: boolean
-  [key: string]: boolean | HeaderNavPricingConfig
+  [key: string]: boolean | HeaderNavAccessConfig
 }
 
 export type SidebarSectionConfig = {
@@ -25,6 +26,10 @@ export const HEADER_NAV_DEFAULT: HeaderNavModulesConfig = {
   home: true,
   console: true,
   pricing: {
+    enabled: true,
+    requireAuth: false,
+  },
+  rankings: {
     enabled: true,
     requireAuth: false,
   },
@@ -51,6 +56,7 @@ export const SIDEBAR_MODULES_DEFAULT: SidebarModulesAdminConfig = {
   personal: {
     enabled: true,
     topup: true,
+    affiliate: true,
     member_upgrade: true,
     personal: true,
   },
@@ -94,7 +100,32 @@ const toBoolean = (value: unknown, fallback: boolean): boolean => {
 const cloneHeaderNavDefault = (): HeaderNavModulesConfig => ({
   ...HEADER_NAV_DEFAULT,
   pricing: { ...HEADER_NAV_DEFAULT.pricing },
+  rankings: { ...HEADER_NAV_DEFAULT.rankings },
 })
+
+const parseAccessModule = (
+  raw: unknown,
+  fallback: HeaderNavAccessConfig
+): HeaderNavAccessConfig => {
+  if (
+    typeof raw === 'boolean' ||
+    typeof raw === 'string' ||
+    typeof raw === 'number'
+  ) {
+    return {
+      enabled: toBoolean(raw, fallback.enabled),
+      requireAuth: fallback.requireAuth,
+    }
+  }
+  if (raw && typeof raw === 'object') {
+    const record = raw as Record<string, unknown>
+    return {
+      enabled: toBoolean(record.enabled, fallback.enabled),
+      requireAuth: toBoolean(record.requireAuth, fallback.requireAuth),
+    }
+  }
+  return { ...fallback }
+}
 
 const cloneSidebarDefault = (): SidebarModulesAdminConfig =>
   Object.entries(SIDEBAR_MODULES_DEFAULT).reduce<SidebarModulesAdminConfig>(
@@ -117,23 +148,17 @@ export function parseHeaderNavModules(
     const result: HeaderNavModulesConfig = {
       ...base,
       pricing: { ...base.pricing },
+      rankings: { ...base.rankings },
     }
 
     Object.entries(parsed).forEach(([key, raw]) => {
       if (key === 'pricing') {
-        if (raw && typeof raw === 'object') {
-          const rawPricing = raw as Record<string, unknown>
-          result.pricing = {
-            enabled: toBoolean(
-              rawPricing.enabled,
-              base.pricing?.enabled ?? true
-            ),
-            requireAuth: toBoolean(
-              rawPricing.requireAuth,
-              base.pricing?.requireAuth ?? false
-            ),
-          }
-        }
+        result.pricing = parseAccessModule(raw, base.pricing)
+        return
+      }
+
+      if (key === 'rankings') {
+        result.rankings = parseAccessModule(raw, base.rankings)
         return
       }
 

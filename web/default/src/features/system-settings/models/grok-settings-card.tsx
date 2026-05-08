@@ -21,41 +21,63 @@ const XAI_VIOLATION_FEE_DOC_URL =
   'https://docs.x.ai/docs/models#usage-guidelines-violation-fee'
 
 const grokSchema = z.object({
-  'grok.violation_deduction_enabled': z.boolean(),
-  'grok.violation_deduction_amount': z.coerce.number().min(0),
+  grok: z.object({
+    violation_deduction_enabled: z.boolean(),
+    violation_deduction_amount: z.coerce.number().min(0),
+  }),
 })
 
 type GrokFormValues = z.infer<typeof grokSchema>
 
 interface Props {
-  defaultValues: GrokFormValues
+  defaultValues: {
+    'grok.violation_deduction_enabled': boolean
+    'grok.violation_deduction_amount': number
+  }
 }
 
 export function GrokSettingsCard(props: Props) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
+  const formDefaults: GrokFormValues = {
+    grok: {
+      violation_deduction_enabled:
+        props.defaultValues['grok.violation_deduction_enabled'],
+      violation_deduction_amount:
+        props.defaultValues['grok.violation_deduction_amount'],
+    },
+  }
 
   const form = useForm<GrokFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(grokSchema) as any,
-    defaultValues: props.defaultValues,
+    defaultValues: formDefaults,
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useResetForm(form as any, props.defaultValues)
+  useResetForm(form as any, formDefaults)
 
   const onSubmit = async (data: GrokFormValues) => {
-    const entries = Object.entries(data) as [string, unknown][]
-    const updates = entries.filter(
+    const flattenedData = {
+      'grok.violation_deduction_enabled':
+        data.grok.violation_deduction_enabled,
+      'grok.violation_deduction_amount': data.grok.violation_deduction_amount,
+    } as const
+    const updates = Object.entries(flattenedData).filter(
       ([key, value]) =>
-        value !== (props.defaultValues[key as keyof GrokFormValues] as unknown)
+        value !==
+        props.defaultValues[key as keyof Props['defaultValues']]
     )
+    if (updates.length === 0) {
+      return
+    }
     for (const [key, value] of updates) {
       await updateOption.mutateAsync({
         key,
         value: value as string | number | boolean,
       })
     }
+    form.reset(data)
   }
 
   const enabled = form.watch('grok.violation_deduction_enabled')

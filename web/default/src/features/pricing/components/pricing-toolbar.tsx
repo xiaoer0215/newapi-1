@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+﻿import { useCallback, useState } from 'react'
 import {
   ArrowUpDown,
   Check,
@@ -85,7 +85,7 @@ function SegmentedControl(props: {
     <div
       role='group'
       aria-label={props.ariaLabel}
-      className='bg-muted/60 inline-flex h-8 items-center rounded-md border p-0.5'
+      className='bg-muted/60 inline-flex h-8 items-center rounded-lg border p-0.5'
     >
       {props.options.map((option) => {
         const Icon = option.icon
@@ -97,10 +97,10 @@ function SegmentedControl(props: {
             onClick={() => props.onChange(option.value)}
             aria-pressed={isActive}
             className={cn(
-              'inline-flex h-full items-center justify-center rounded-[5px] text-xs font-medium transition-all',
+              'inline-flex h-full items-center justify-center rounded-md text-xs font-medium transition-all',
               Icon && !option.label ? 'w-7' : 'gap-1.5 px-3',
               isActive
-                ? 'bg-foreground text-background shadow-sm'
+                ? 'bg-primary text-primary-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -149,7 +149,7 @@ export function PricingToolbar(props: PricingToolbarProps) {
   return (
     <div className='rounded-xl border p-3'>
       <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-2'>
           <Button
             type='button'
             variant='outline'
@@ -170,15 +170,19 @@ export function PricingToolbar(props: PricingToolbarProps) {
             <span className='text-foreground font-semibold tabular-nums'>
               {props.filteredCount.toLocaleString()}
             </span>
-            <span>
-              {props.filteredCount === 1 ? t('model') : t('models')}
-            </span>
+            <span>{props.filteredCount === 1 ? t('model') : t('models')}</span>
             {props.hasActiveFilters && props.totalCount && (
               <span className='text-muted-foreground/60 text-xs'>
                 / {props.totalCount.toLocaleString()}
               </span>
             )}
           </div>
+
+          {props.hasActiveFilters && (
+            <Badge variant='secondary' className='rounded-md px-2 py-0.5 text-[11px]'>
+              {props.activeFilterCount} {t('Filter')}
+            </Badge>
+          )}
         </div>
 
         <div className='flex flex-wrap items-center gap-2'>
@@ -294,3 +298,4 @@ export function PricingToolbar(props: PricingToolbarProps) {
     </div>
   )
 }
+

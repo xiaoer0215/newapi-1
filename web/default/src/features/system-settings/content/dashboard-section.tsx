@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -139,11 +140,13 @@ export function DashboardSection({ defaultValues }: DashboardSectionProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {granularityOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
+                      <SelectGroup>
+                        {granularityOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                   <FormDescription>

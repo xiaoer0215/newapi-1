@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import i18next from 'i18next'
 import { toast } from 'sonner'
 import { MESSAGE_ACTION_LABELS } from '../constants'
 
@@ -11,7 +12,7 @@ export function useMessageActionGuard(isGenerating: boolean) {
     (action: () => void) => {
       return () => {
         if (isGenerating) {
-          toast.warning(MESSAGE_ACTION_LABELS.WAIT_GENERATION)
+          toast.warning(i18next.t(MESSAGE_ACTION_LABELS.WAIT_GENERATION))
           return
         }
         action()

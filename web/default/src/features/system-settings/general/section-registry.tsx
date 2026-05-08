@@ -47,6 +47,13 @@ const GENERAL_SECTIONS = [
           PreConsumedQuota: settings.PreConsumedQuota,
           QuotaForInviter: settings.QuotaForInviter,
           QuotaForInvitee: settings.QuotaForInvitee,
+          AffiliateCommissionPercentage:
+            settings.AffiliateCommissionPercentage,
+          AffiliateCommissionTiers: settings.AffiliateCommissionTiers,
+          AffiliateTransferEnabled: settings.AffiliateTransferEnabled,
+          AffiliateWithdrawEnabled: settings.AffiliateWithdrawEnabled,
+          AffiliateMinWithdrawQuota: settings.AffiliateMinWithdrawQuota,
+          AffiliateWithdrawNotice: settings.AffiliateWithdrawNotice,
           TopUpLink: settings.TopUpLink,
           'general_setting.docs_link': settings['general_setting.docs_link'],
           'quota_setting.enable_free_model_pre_consume':

@@ -222,6 +222,23 @@ export function MonitoringSettingsSection({
     }
 
     baselineRef.current = normalized
+    form.reset({
+      ChannelDisableThreshold: normalized.ChannelDisableThreshold,
+      QuotaRemindThreshold: normalized.QuotaRemindThreshold,
+      AutomaticDisableChannelEnabled:
+        normalized.AutomaticDisableChannelEnabled,
+      AutomaticEnableChannelEnabled:
+        normalized.AutomaticEnableChannelEnabled,
+      AutomaticDisableKeywords: normalized.AutomaticDisableKeywords,
+      AutomaticDisableStatusCodes: normalized.AutomaticDisableStatusCodes,
+      AutomaticRetryStatusCodes: normalized.AutomaticRetryStatusCodes,
+      monitor_setting: {
+        auto_test_channel_enabled:
+          normalized['monitor_setting.auto_test_channel_enabled'],
+        auto_test_channel_minutes:
+          normalized['monitor_setting.auto_test_channel_minutes'],
+      },
+    })
   }
 
   return (

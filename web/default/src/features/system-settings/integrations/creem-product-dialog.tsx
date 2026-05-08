@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -167,8 +168,10 @@ export function CreemProductDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value='USD'>USD ($)</SelectItem>
-                        <SelectItem value='EUR'>EUR (€)</SelectItem>
+                        <SelectGroup>
+                          <SelectItem value='USD'>USD ($)</SelectItem>
+                          <SelectItem value='EUR'>EUR (€)</SelectItem>
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                     <FormMessage />

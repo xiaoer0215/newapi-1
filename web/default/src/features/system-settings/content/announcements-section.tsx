@@ -39,6 +39,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -522,16 +523,18 @@ export function AnnouncementsSection({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {typeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            <div className='flex items-center gap-2'>
-                              <div
-                                className={`h-3 w-3 rounded-full ${option.color}`}
-                              />
-                              {option.label}
-                            </div>
-                          </SelectItem>
-                        ))}
+                        <SelectGroup>
+                          {typeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className='flex items-center gap-2'>
+                                <div
+                                  className={`h-3 w-3 rounded-full ${option.color}`}
+                                />
+                                {option.label}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                     <FormMessage />

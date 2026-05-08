@@ -68,8 +68,8 @@ export function usePlaygroundState() {
   const updateMessages = useCallback(
     (updater: Message[] | ((prev: Message[]) => Message[])) => {
       setMessages((prev) => {
-        const newMessages =
-          typeof updater === 'function' ? updater(prev) : updater
+        const nextValue = typeof updater === 'function' ? updater(prev) : updater
+        const newMessages = Array.isArray(nextValue) ? nextValue : []
         saveMessages(newMessages)
         return newMessages
       })

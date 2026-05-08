@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import * as z from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -115,6 +115,9 @@ type GlobalSettingsCardProps = {
 export function GlobalSettingsCard({ defaultValues }: GlobalSettingsCardProps) {
   const { t } = useTranslation()
   const updateOption = useUpdateOption()
+  const flattenedDefaultsRef = useRef<FlatGlobalModelSettings>(
+    flattenGlobalValues(defaultValues)
+  )
 
   const form = useForm<
     GlobalModelSettingsFormInput,
@@ -126,6 +129,7 @@ export function GlobalSettingsCard({ defaultValues }: GlobalSettingsCardProps) {
   })
 
   useEffect(() => {
+    flattenedDefaultsRef.current = flattenGlobalValues(defaultValues)
     form.reset(defaultValues as GlobalModelSettingsFormInput)
   }, [defaultValues, form])
 
@@ -147,11 +151,11 @@ export function GlobalSettingsCard({ defaultValues }: GlobalSettingsCardProps) {
   }
 
   const onSubmit = async (values: GlobalModelSettingsFormValues) => {
-    const flattenedDefaults = flattenGlobalValues(defaultValues)
     const flattenedValues = flattenGlobalValues(values)
     const updates = Object.entries(flattenedValues).filter(
       ([key, value]) =>
-        value !== flattenedDefaults[key as keyof FlatGlobalModelSettings]
+        value !==
+        flattenedDefaultsRef.current[key as keyof FlatGlobalModelSettings]
     )
 
     if (updates.length === 0) {
@@ -165,6 +169,9 @@ export function GlobalSettingsCard({ defaultValues }: GlobalSettingsCardProps) {
         value,
       })
     }
+
+    flattenedDefaultsRef.current = flattenedValues
+    form.reset(values as GlobalModelSettingsFormInput)
   }
 
   return (

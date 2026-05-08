@@ -23,110 +23,118 @@ export async function sendChatCompletion(
  * Get user available models
  */
 export async function getUserModels(): Promise<ModelOption[]> {
-  const res = await api.get(API_ENDPOINTS.USER_MODELS)
-  const { data } = res
+  try {
+    const res = await api.get(API_ENDPOINTS.USER_MODELS)
+    const { data } = res
 
-  if (!data.success || !Array.isArray(data.data)) {
+    if (!data.success || !Array.isArray(data.data)) {
+      return []
+    }
+
+    return data.data.map((model: string) => ({
+      label: model,
+      value: model,
+    }))
+  } catch {
     return []
   }
-
-  return data.data.map((model: string) => ({
-    label: model,
-    value: model,
-  }))
 }
 
 /**
  * Get user groups
  */
 export async function getUserGroups(): Promise<GroupOption[]> {
-  const res = await api.get(API_ENDPOINTS.USER_GROUPS)
-  const { data } = res
+  try {
+    const res = await api.get(API_ENDPOINTS.USER_GROUPS)
+    const { data } = res
 
-  if (!data.success || !data.data) {
-    return []
-  }
+    if (!data.success || !data.data) {
+      return []
+    }
 
-  const rawGroups = data.data as unknown
+    const rawGroups = data.data as unknown
 
-  if (Array.isArray(rawGroups)) {
-    const normalizedGroups: GroupOption[] = []
+    if (Array.isArray(rawGroups)) {
+      const normalizedGroups: GroupOption[] = []
 
-    rawGroups.forEach((item) => {
-      if (typeof item === 'string') {
+      rawGroups.forEach((item) => {
+        if (typeof item === 'string') {
+          normalizedGroups.push({
+            label: item,
+            value: item,
+            desc: item,
+          })
+          return
+        }
+
+        if (!item || typeof item !== 'object') {
+          return
+        }
+
+        const group = item as Record<string, unknown>
+        const value =
+          typeof group.value === 'string'
+            ? group.value
+            : typeof group.label === 'string'
+              ? group.label
+              : ''
+
+        if (!value) {
+          return
+        }
+
         normalizedGroups.push({
-          label: item,
-          value: item,
-          desc: item,
+          label:
+            typeof group.label === 'string' && group.label.trim()
+              ? group.label
+              : value,
+          value,
+          ratio:
+            typeof group.ratio === 'number' || typeof group.ratio === 'string'
+              ? group.ratio
+              : undefined,
+          desc:
+            typeof group.desc === 'string'
+              ? group.desc
+              : typeof group.description === 'string'
+                ? group.description
+                : value,
         })
-        return
-      }
+      })
 
-      if (!item || typeof item !== 'object') {
-        return
-      }
+      return normalizedGroups
+    }
 
-      const group = item as Record<string, unknown>
-      const value =
-        typeof group.value === 'string'
-          ? group.value
-          : typeof group.label === 'string'
-            ? group.label
-            : ''
+    if (typeof rawGroups !== 'object') {
+      return []
+    }
 
-      if (!value) {
-        return
-      }
+    const groupData = rawGroups as Record<string, unknown>
 
-      normalizedGroups.push({
-        label:
-          typeof group.label === 'string' && group.label.trim()
-            ? group.label
-            : value,
-        value,
+    // label is for button display (name only); desc is for dropdown content
+    return Object.entries(groupData).map(([group, info]) => {
+      const normalizedInfo =
+        info && typeof info === 'object'
+          ? (info as Record<string, unknown>)
+          : ({} as Record<string, unknown>)
+
+      return {
+        label: group,
+        value: group,
         ratio:
-          typeof group.ratio === 'number' || typeof group.ratio === 'string'
-            ? group.ratio
+          typeof normalizedInfo.ratio === 'number' ||
+          typeof normalizedInfo.ratio === 'string'
+            ? normalizedInfo.ratio
             : undefined,
         desc:
-          typeof group.desc === 'string'
-            ? group.desc
-            : typeof group.description === 'string'
-              ? group.description
-              : value,
-      })
+          typeof normalizedInfo.desc === 'string'
+            ? normalizedInfo.desc
+            : typeof normalizedInfo.description === 'string'
+              ? normalizedInfo.description
+              : group,
+      }
     })
-
-    return normalizedGroups
-  }
-
-  if (typeof rawGroups !== 'object') {
+  } catch {
     return []
   }
-
-  const groupData = rawGroups as Record<string, unknown>
-
-  // label is for button display (name only); desc is for dropdown content
-  return Object.entries(groupData).map(([group, info]) => {
-    const normalizedInfo =
-      info && typeof info === 'object'
-        ? (info as Record<string, unknown>)
-        : ({} as Record<string, unknown>)
-
-    return {
-      label: group,
-      value: group,
-      ratio:
-        typeof normalizedInfo.ratio === 'number' ||
-        typeof normalizedInfo.ratio === 'string'
-          ? normalizedInfo.ratio
-          : undefined,
-      desc:
-        typeof normalizedInfo.desc === 'string'
-          ? normalizedInfo.desc
-          : typeof normalizedInfo.description === 'string'
-            ? normalizedInfo.description
-            : group,
-    }
-  })
 }

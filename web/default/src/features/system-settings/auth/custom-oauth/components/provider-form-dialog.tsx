@@ -24,6 +24,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -311,14 +312,16 @@ export function ProviderFormDialog(props: ProviderFormDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {AUTH_STYLE_OPTIONS.map((option) => (
-                          <SelectItem
-                            key={option.value}
-                            value={String(option.value)}
-                          >
-                            {t(option.labelKey)}
-                          </SelectItem>
-                        ))}
+                        <SelectGroup>
+                          {AUTH_STYLE_OPTIONS.map((option) => (
+                            <SelectItem
+                              key={option.value}
+                              value={String(option.value)}
+                            >
+                              {t(option.labelKey)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                     <FormDescription>

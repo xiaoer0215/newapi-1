@@ -96,6 +96,11 @@ export function SidebarModulesCard() {
           description: t('Balance and top-up management'),
         },
         {
+          key: 'affiliate',
+          title: t('Affiliate Center'),
+          description: t('Referral commission, transfer, and withdrawal page.'),
+        },
+        {
           key: 'member_upgrade',
           title: t('Member Upgrade'),
           description: t('Member-only upgrade plans and entrance'),

@@ -36,6 +36,7 @@ const DEFAULT_SIDEBAR_MODULES: SidebarModulesAdminConfig = {
   personal: {
     enabled: true,
     topup: true,
+    affiliate: true,
     member_upgrade: true,
     personal: true,
   },
@@ -92,6 +93,7 @@ const URL_TO_CONFIG_MAP: Record<string, { section: string; module: string }> = {
   '/usage-logs/task': { section: 'console', module: 'task' },
   '/group-monitor': { section: 'console', module: 'group_monitor' },
   '/wallet': { section: 'personal', module: 'topup' },
+  '/affiliate': { section: 'personal', module: 'affiliate' },
   '/member-upgrade': { section: 'personal', module: 'member_upgrade' },
   '/profile': { section: 'personal', module: 'personal' },
   '/channels': { section: 'admin', module: 'channel' },
@@ -296,6 +298,4 @@ export function useSidebarConfig(navGroups: NavGroup[]): NavGroup[] {
 
   return filteredNavGroups
 }
-
-
 

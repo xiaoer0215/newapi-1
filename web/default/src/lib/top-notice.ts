@@ -13,6 +13,7 @@ export const TOP_NOTICE_ROUTE_OPTIONS = [
   { value: '/', labelKey: 'Home' },
   { value: '/dashboard/overview', labelKey: 'Overview' },
   { value: '/dashboard/models', labelKey: 'Data Board' },
+  { value: '/affiliate', labelKey: 'Affiliate Center' },
   { value: '/keys', labelKey: 'API Keys' },
   { value: '/usage-logs/common', labelKey: 'Usage Logs' },
   { value: '/group-monitor', labelKey: 'Group Monitor' },

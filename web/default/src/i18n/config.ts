@@ -1,12 +1,19 @@
-import i18n from 'i18next'
+﻿import i18n from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
+import { AFFILIATE_I18N_OVERRIDES } from './affiliate-overrides'
 import { DRAWING_I18N_OVERRIDES } from './drawing-overrides'
 import { CONTACT_PANELS_I18N_OVERRIDES } from './contact-panels-overrides'
+import { DASHBOARD_LATEST_I18N_OVERRIDES } from './dashboard-latest-overrides'
 import { GROUP_MONITOR_I18N_OVERRIDES } from './group-monitor-overrides'
 import { GROUP_RATIO_I18N_OVERRIDES } from './group-ratio-overrides'
 import { HOME_PAGE_CONFIG_I18N_OVERRIDES } from './home-page-config-overrides'
 import { MEMBER_UPGRADE_I18N_OVERRIDES } from './member-upgrade-overrides'
+import { OVERVIEW_LAYOUT_I18N_OVERRIDES } from './overview-layout-overrides'
+import { PLAYGROUND_I18N_OVERRIDES } from './playground-overrides'
+import { PRICING_METADATA_I18N_OVERRIDES } from './pricing-metadata-overrides'
+import { PRICING_OFFICIAL_I18N_OVERRIDES } from './pricing-official-overrides'
+import { RANKINGS_I18N_OVERRIDES } from './rankings-overrides'
 import { TOP_NOTICE_RATIO_I18N_OVERRIDES } from './top-notice-ratio-overrides'
 import en from './locales/en.json'
 import fr from './locales/fr.json'
@@ -23,12 +30,19 @@ function withOverrides<
     ...base,
     translation: {
       ...base.translation,
+      ...AFFILIATE_I18N_OVERRIDES[locale],
       ...DRAWING_I18N_OVERRIDES[locale],
       ...CONTACT_PANELS_I18N_OVERRIDES[locale],
+      ...DASHBOARD_LATEST_I18N_OVERRIDES[locale],
       ...GROUP_MONITOR_I18N_OVERRIDES[locale],
       ...GROUP_RATIO_I18N_OVERRIDES[locale],
       ...HOME_PAGE_CONFIG_I18N_OVERRIDES[locale],
       ...MEMBER_UPGRADE_I18N_OVERRIDES[locale],
+      ...OVERVIEW_LAYOUT_I18N_OVERRIDES[locale],
+      ...PLAYGROUND_I18N_OVERRIDES[locale],
+      ...PRICING_METADATA_I18N_OVERRIDES[locale],
+      ...PRICING_OFFICIAL_I18N_OVERRIDES[locale],
+      ...RANKINGS_I18N_OVERRIDES[locale],
       ...TOP_NOTICE_RATIO_I18N_OVERRIDES[locale],
     },
   }
@@ -63,3 +77,5 @@ i18n
   })
 
 export default i18n
+
+

@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -89,8 +90,18 @@ export function PricingSection({ defaultValues }: PricingSectionProps) {
         PricingFormValues
       >,
       defaultValues,
-      onSubmit: async (_data, changedFields) => {
-        for (const [key, value] of Object.entries(changedFields)) {
+      onSubmit: async (data, changedFields) => {
+        const preparedChangedFields = { ...changedFields }
+
+        if (
+          'general_setting.quota_display_type' in changedFields ||
+          'DisplayInCurrencyEnabled' in changedFields
+        ) {
+          preparedChangedFields.DisplayInCurrencyEnabled =
+            data.general_setting.quota_display_type !== 'TOKENS'
+        }
+
+        for (const [key, value] of Object.entries(preparedChangedFields)) {
           if (value === undefined || value === null) continue
           if (typeof value === 'object') continue
 
@@ -112,7 +123,6 @@ export function PricingSection({ defaultValues }: PricingSectionProps) {
 
   const displayType = form.watch('general_setting.quota_display_type') ?? 'USD'
   const displayInCurrencyEnabled = form.watch('DisplayInCurrencyEnabled')
-  const showTokensOnlyOption = displayType === 'TOKENS'
   const showQuotaPerUnit =
     displayType === 'TOKENS' ||
     defaultValues.QuotaPerUnit !== DEFAULT_CURRENCY_CONFIG.quotaPerUnit
@@ -169,16 +179,16 @@ export function PricingSection({ defaultValues }: PricingSectionProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value='USD'>{t('USD')}</SelectItem>
-                      <SelectItem value='CNY'>{t('CNY')}</SelectItem>
-                      <SelectItem value='CUSTOM'>
-                        {t('Custom Currency')}
-                      </SelectItem>
-                      {showTokensOnlyOption && (
+                      <SelectGroup>
+                        <SelectItem value='USD'>{t('USD')}</SelectItem>
+                        <SelectItem value='CNY'>{t('CNY')}</SelectItem>
+                        <SelectItem value='CUSTOM'>
+                          {t('Custom Currency')}
+                        </SelectItem>
                         <SelectItem value='TOKENS'>
                           {t('Tokens Only')}
                         </SelectItem>
-                      )}
+                      </SelectGroup>
                     </SelectContent>
                   </Select>
                   <FormDescription>

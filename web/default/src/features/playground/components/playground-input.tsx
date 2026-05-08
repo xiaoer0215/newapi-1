@@ -49,12 +49,12 @@ interface PlaygroundInputProps {
 }
 
 const suggestions = [
-  { icon: BarChartIcon, text: 'Analyze data', color: '#76d0eb' },
-  { icon: BoxIcon, text: 'Surprise me', color: '#76d0eb' },
-  { icon: NotepadTextIcon, text: 'Summarize text', color: '#ea8444' },
-  { icon: CodeSquareIcon, text: 'Code', color: '#6c71ff' },
-  { icon: GraduationCapIcon, text: 'Get advice', color: '#76d0eb' },
-  { icon: null, text: 'More' },
+  { icon: BarChartIcon, key: 'Analyze data', color: '#76d0eb' },
+  { icon: BoxIcon, key: 'Surprise me', color: '#76d0eb' },
+  { icon: NotepadTextIcon, key: 'Summarize text', color: '#ea8444' },
+  { icon: CodeSquareIcon, key: 'Code', color: '#6c71ff' },
+  { icon: GraduationCapIcon, key: 'Get advice', color: '#76d0eb' },
+  { icon: null, key: 'More' },
 ]
 
 export function PlaygroundInput({
@@ -89,8 +89,8 @@ export function PlaygroundInput({
     })
   }
 
-  const handleSuggestionClick = (suggestion: string) => {
-    onSubmit(suggestion)
+  const handleSuggestionClick = (suggestionKey: string) => {
+    onSubmit(t(suggestionKey))
   }
 
   return (
@@ -203,17 +203,17 @@ export function PlaygroundInput({
       </PromptInput>
 
       <Suggestions>
-        {suggestions.map(({ icon: Icon, text, color }) => (
+        {suggestions.map(({ icon: Icon, key, color }) => (
           <Suggestion
             className={`text-xs font-normal sm:text-sm ${
-              text === 'More' ? 'hidden sm:flex' : ''
+              key === 'More' ? 'hidden sm:flex' : ''
             }`}
-            key={text}
-            onClick={() => handleSuggestionClick(text)}
-            suggestion={text}
+            key={key}
+            onClick={() => handleSuggestionClick(key)}
+            suggestion={t(key)}
           >
             {Icon && <Icon size={16} style={{ color }} />}
-            {text}
+            {t(key)}
           </Suggestion>
         ))}
       </Suggestions>

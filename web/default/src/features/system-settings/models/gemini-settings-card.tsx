@@ -200,6 +200,26 @@ export function GeminiSettingsCard({ defaultValues }: GeminiSettingsCardProps) {
         value: normalized[key],
       })
     }
+
+    normalizedDefaultsRef.current = normalized
+    form.reset(
+      buildFormDefaults({
+        gemini: {
+          safety_settings: normalized['gemini.safety_settings'],
+          version_settings: normalized['gemini.version_settings'],
+          supported_imagine_models:
+            normalized['gemini.supported_imagine_models'],
+          thinking_adapter_enabled:
+            normalized['gemini.thinking_adapter_enabled'],
+          thinking_adapter_budget_tokens_percentage:
+            normalized['gemini.thinking_adapter_budget_tokens_percentage'],
+          function_call_thought_signature_enabled:
+            normalized['gemini.function_call_thought_signature_enabled'],
+          remove_function_response_id_enabled:
+            normalized['gemini.remove_function_response_id_enabled'],
+        },
+      })
+    )
   }
 
   const imaginePlaceholder = useMemo(

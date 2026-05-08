@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -37,7 +37,7 @@ export function ModelCardGrid(props: ModelCardGridProps) {
 
   return (
     <div className='space-y-4 sm:space-y-5'>
-      <div className='grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4'>
         {pagedModels.map((model) => (
           <ModelCard
             key={model.id ?? model.model_name}

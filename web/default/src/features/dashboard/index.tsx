@@ -1,45 +1,27 @@
-import {
-  type ReactElement,
-  useState,
-  useCallback,
-  useMemo,
-  lazy,
-  Suspense,
-} from 'react'
+import { useState, useCallback, useMemo, lazy, Suspense } from 'react'
 import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { useStatus } from '@/hooks/use-status'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SectionPageLayout } from '@/components/layout'
-import {
-  CardStaggerContainer,
-  CardStaggerItem,
-  FadeIn,
-} from '@/components/page-transition'
+import { FadeIn } from '@/components/page-transition'
+import { ModelsChartPreferences } from './components/models/models-chart-preferences'
+import { ModelsFilter } from './components/models/models-filter-dialog'
+import { OverviewDashboard } from './components/overview/overview-dashboard'
+import { DEFAULT_TIME_GRANULARITY } from './constants'
 import {
   buildDefaultDashboardFilters,
   getSavedChartPreferences,
   saveChartPreferences,
 } from './lib'
-import { ModelsChartPreferences } from './components/models/models-chart-preferences'
-import { ModelsFilter } from './components/models/models-filter-dialog'
-import { AnnouncementsPanel } from './components/overview/announcements-panel'
-import { ApiInfoPanel } from './components/overview/api-info-panel'
-import { ContactPanelsPanel } from './components/overview/contact-panels-panel'
-import { FAQPanel } from './components/overview/faq-panel'
-import { SummaryCards } from './components/overview/summary-cards'
-import { UptimePanel } from './components/overview/uptime-panel'
-import { DEFAULT_TIME_GRANULARITY } from './constants'
 import {
   type DashboardSectionId,
   DASHBOARD_DEFAULT_SECTION,
   DASHBOARD_SECTION_IDS,
 } from './section-registry'
 import {
-  type ContactPanelConfig,
   type DashboardChartPreferences,
   type DashboardFilters,
   type QuotaDataItem,
@@ -160,96 +142,6 @@ export function Dashboard() {
     []
   )
 
-  const { status } = useStatus()
-  const resolveEnabled = useCallback(
-    (key: string, fallback: boolean) => {
-      const value = status?.[key]
-      return typeof value === 'boolean' ? value : fallback
-    },
-    [status]
-  )
-  const apiInfoEnabled = resolveEnabled('api_info_enabled', true)
-  const announcementsEnabled = resolveEnabled('announcements_enabled', true)
-  const faqEnabled = resolveEnabled('faq_enabled', true)
-  const uptimeEnabled = resolveEnabled('uptime_kuma_enabled', true)
-  const contactEnabled = resolveEnabled('contact_enabled', false)
-  const contact2Enabled = resolveEnabled('contact2_enabled', false)
-  const contactImage =
-    typeof status?.contact_image === 'string' ? status.contact_image : ''
-  const contactTitle =
-    typeof status?.contact_title === 'string' ? status.contact_title : ''
-  const contactCaption =
-    typeof status?.contact_caption === 'string' ? status.contact_caption : ''
-  const contactImage2 =
-    typeof status?.contact_image2 === 'string' ? status.contact_image2 : ''
-  const contactTitle2 =
-    typeof status?.contact2_title === 'string' ? status.contact2_title : ''
-  const contactCaption2 =
-    typeof status?.contact2_caption === 'string'
-      ? status.contact2_caption
-      : ''
-  const contactPanels = useMemo(() => {
-    const panels: ContactPanelConfig[] = []
-
-    if (contactEnabled && contactImage.trim()) {
-      panels.push({
-        title: contactTitle,
-        image: contactImage,
-        caption: contactCaption,
-      })
-    }
-
-    if (contact2Enabled && contactImage2.trim()) {
-      panels.push({
-        title: contactTitle2,
-        image: contactImage2,
-        caption: contactCaption2,
-      })
-    }
-
-    return panels
-  }, [
-    contact2Enabled,
-    contactCaption,
-    contactCaption2,
-    contactEnabled,
-    contactImage,
-    contactImage2,
-    contactTitle,
-    contactTitle2,
-  ])
-
-  const overviewPanels = useMemo(() => {
-    const panels: Array<{ key: string; node: ReactElement }> = []
-
-    if (apiInfoEnabled) {
-      panels.push({ key: 'api-info', node: <ApiInfoPanel /> })
-    }
-    if (announcementsEnabled) {
-      panels.push({ key: 'announcements', node: <AnnouncementsPanel /> })
-    }
-    if (contactPanels.length > 0) {
-      panels.push({
-        key: 'contact-panels',
-        node: <ContactPanelsPanel panels={contactPanels} />,
-      })
-    }
-    if (faqEnabled) {
-      panels.push({ key: 'faq', node: <FAQPanel /> })
-    }
-    if (uptimeEnabled) {
-      panels.push({ key: 'uptime', node: <UptimePanel /> })
-    }
-
-    return panels
-  }, [
-    announcementsEnabled,
-    apiInfoEnabled,
-    contactPanels,
-    faqEnabled,
-    uptimeEnabled,
-  ])
-
   const meta = SECTION_META[activeSection] ?? SECTION_META.overview
   const isAdmin = Boolean(userRole && userRole >= ROLE.ADMIN)
   const visibleSections = useMemo(
@@ -268,7 +160,8 @@ export function Dashboard() {
     },
     [navigate]
   )
-  const showSectionTabs = activeSection !== 'overview' && visibleSections.length > 1
+  const showSectionTabs =
+    activeSection !== 'overview' && visibleSections.length > 1
   const modelActions =
     activeSection === 'models' ? (
       <>
@@ -314,20 +207,7 @@ export function Dashboard() {
               )}
             </div>
           )}
-          {activeSection === 'overview' && (
-            <>
-              <SummaryCards />
-              {overviewPanels.length > 0 && (
-                <CardStaggerContainer className='grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2'>
-                  {overviewPanels.map((panel) => (
-                    <CardStaggerItem key={panel.key}>
-                      {panel.node}
-                    </CardStaggerItem>
-                  ))}
-                </CardStaggerContainer>
-              )}
-            </>
-          )}
+          {activeSection === 'overview' && <OverviewDashboard />}
           {activeSection === 'models' && (
             <>
               <FadeIn>

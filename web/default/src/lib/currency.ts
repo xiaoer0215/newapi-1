@@ -404,6 +404,66 @@ export function formatBillingCurrencyFromUSD(
 }
 
 /**
+ * Format raw quota values for billing/affiliate/payment contexts.
+ *
+ * Converts quota units to USD first, then formats using billing display rules.
+ * Unlike `formatQuotaWithCurrency`, this will never render token counts.
+ */
+export function formatBillingCurrencyFromQuota(
+  quota: number | null | undefined,
+  options?: CurrencyFormatOptions
+): string {
+  if (quota == null || Number.isNaN(quota)) return '-'
+
+  const { config } = getCurrencyDisplay()
+  const amountUSD = quota / config.quotaPerUnit
+  return formatBillingCurrencyFromUSD(amountUSD, options)
+}
+
+/**
+ * Convert a quota value into the currently configured billing display amount.
+ *
+ * Example:
+ * - TOKENS mode => still returns USD amount
+ * - CNY mode => returns converted CNY amount
+ */
+export function quotaToBillingAmount(
+  quota: number | null | undefined
+): number {
+  if (quota == null || Number.isNaN(quota)) return 0
+
+  const { config } = getCurrencyDisplay()
+  const meta = getBillingDisplayMeta(config)
+  const amountUSD = quota / config.quotaPerUnit
+
+  if (meta.kind === 'currency' || meta.kind === 'custom') {
+    return amountUSD * meta.exchangeRate
+  }
+
+  return amountUSD
+}
+
+/**
+ * Parse a billing display amount back into raw quota units.
+ *
+ * This is intended for affiliate withdrawal / billing amount inputs where
+ * token display should never be used as the editable unit.
+ */
+export function parseBillingAmountToQuota(
+  amount: number | null | undefined
+): number {
+  if (amount == null || !Number.isFinite(amount)) return 0
+
+  const { config } = getCurrencyDisplay()
+  const meta = getBillingDisplayMeta(config)
+  const exchangeRate =
+    meta.kind === 'currency' || meta.kind === 'custom' ? meta.exchangeRate : 1
+  const amountUSD = exchangeRate > 0 ? amount / exchangeRate : amount
+
+  return Math.round(amountUSD * config.quotaPerUnit)
+}
+
+/**
  * Format raw quota values (token units) to display currency.
  *
  * Converts raw quota/token amounts to USD first, then formats according

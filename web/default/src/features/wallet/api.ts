@@ -12,6 +12,15 @@ import type {
   StripePaymentResponse,
   AffiliateCodeResponse,
   AffiliateTransferResponse,
+  AffiliateSummaryResponse,
+  AffiliateRecordsResponse,
+  AffiliateInviteesResponse,
+  AffiliateWithdrawRequest,
+  AffiliateWithdrawResponse,
+  AffiliateWithdrawalsResponse,
+  AdminAffiliateInviteRelationsResponse,
+  AdminAffiliateCommissionRecordsResponse,
+  AdminAffiliateWithdrawalsResponse,
   BillingHistoryResponse,
   CompleteOrderRequest,
   CreemPaymentRequest,
@@ -164,7 +173,128 @@ export async function getAffiliateCode(): Promise<AffiliateCodeResponse> {
 export async function transferAffiliateQuota(
   request: AffiliateTransferRequest
 ): Promise<AffiliateTransferResponse> {
-  const res = await api.post('/api/user/aff_transfer', request)
+  const res = await api.post('/api/user/affiliate/transfer', request)
+  return res.data
+}
+
+export async function getAffiliateSummary(): Promise<AffiliateSummaryResponse> {
+  const res = await api.get('/api/user/affiliate/summary')
+  return res.data
+}
+
+export async function getAffiliateRecords(
+  page: number,
+  pageSize: number
+): Promise<AffiliateRecordsResponse> {
+  const params = new URLSearchParams({
+    p: page.toString(),
+    page_size: pageSize.toString(),
+  })
+  const res = await api.get(`/api/user/affiliate/records?${params.toString()}`)
+  return res.data
+}
+
+export async function getAffiliateInvitees(
+  page: number,
+  pageSize: number
+): Promise<AffiliateInviteesResponse> {
+  const params = new URLSearchParams({
+    p: page.toString(),
+    page_size: pageSize.toString(),
+  })
+  const res = await api.get(
+    `/api/user/affiliate/invitees?${params.toString()}`
+  )
+  return res.data
+}
+
+export async function createAffiliateWithdrawal(
+  request: AffiliateWithdrawRequest
+): Promise<AffiliateWithdrawResponse> {
+  const res = await api.post('/api/user/affiliate/withdraw', request)
+  return res.data
+}
+
+export async function getAffiliateWithdrawals(
+  page: number,
+  pageSize: number
+): Promise<AffiliateWithdrawalsResponse> {
+  const params = new URLSearchParams({
+    p: page.toString(),
+    page_size: pageSize.toString(),
+  })
+  const res = await api.get(
+    `/api/user/affiliate/withdrawals?${params.toString()}`
+  )
+  return res.data
+}
+
+export async function getAdminAffiliateInviteRelations(
+  page: number,
+  pageSize: number,
+  keyword?: string
+): Promise<AdminAffiliateInviteRelationsResponse> {
+  const params = new URLSearchParams({
+    p: page.toString(),
+    page_size: pageSize.toString(),
+  })
+  if (keyword) {
+    params.append('keyword', keyword)
+  }
+  const res = await api.get(
+    `/api/user/admin/affiliate/invite-relations?${params.toString()}`
+  )
+  return res.data
+}
+
+export async function getAdminAffiliateRecords(
+  page: number,
+  pageSize: number,
+  keyword?: string
+): Promise<AdminAffiliateCommissionRecordsResponse> {
+  const params = new URLSearchParams({
+    p: page.toString(),
+    page_size: pageSize.toString(),
+  })
+  if (keyword) {
+    params.append('keyword', keyword)
+  }
+  const res = await api.get(
+    `/api/user/admin/affiliate/records?${params.toString()}`
+  )
+  return res.data
+}
+
+export async function getAdminAffiliateWithdrawals(
+  page: number,
+  pageSize: number,
+  keyword?: string,
+  status?: string
+): Promise<AdminAffiliateWithdrawalsResponse> {
+  const params = new URLSearchParams({
+    p: page.toString(),
+    page_size: pageSize.toString(),
+  })
+  if (keyword) {
+    params.append('keyword', keyword)
+  }
+  if (status) {
+    params.append('status', status)
+  }
+  const res = await api.get(
+    `/api/user/admin/affiliate/withdrawals?${params.toString()}`
+  )
+  return res.data
+}
+
+export async function reviewAdminAffiliateWithdrawal(
+  id: number,
+  payload: { status: 'approved' | 'rejected' | 'paid'; review_note?: string }
+): Promise<AffiliateWithdrawResponse> {
+  const res = await api.post(
+    `/api/user/admin/affiliate/withdrawals/${id}/review`,
+    payload
+  )
   return res.data
 }
 

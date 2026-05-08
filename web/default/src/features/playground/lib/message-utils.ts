@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid'
+import i18next from 'i18next'
 import { MESSAGE_ROLES, MESSAGE_STATUS, ERROR_MESSAGES } from '../constants'
 import type {
   Message,
@@ -20,8 +21,55 @@ export function createMessageVersion(content: string): MessageVersion {
 /**
  * Get current version from message (always returns the first version)
  */
+function normalizeMessageVersion(
+  version: MessageVersion | null | undefined
+): MessageVersion {
+  return {
+    id: typeof version?.id === 'string' && version.id ? version.id : nanoid(),
+    content: typeof version?.content === 'string' ? version.content : '',
+  }
+}
+
+function normalizeMessage(message: Message): Message {
+  const versions = Array.isArray(message?.versions)
+    ? message.versions.map(normalizeMessageVersion)
+    : []
+  const sources = Array.isArray(message?.sources)
+    ? message.sources
+        .filter(
+          (source): source is { href: string; title: string } =>
+            !!source &&
+            typeof source.href === 'string' &&
+            typeof source.title === 'string'
+        )
+        .map((source) => ({ href: source.href, title: source.title }))
+    : undefined
+
+  return {
+    ...message,
+    key: typeof message?.key === 'string' && message.key ? message.key : nanoid(),
+    from:
+      message?.from === MESSAGE_ROLES.ASSISTANT ||
+      message?.from === MESSAGE_ROLES.SYSTEM
+        ? message.from
+        : MESSAGE_ROLES.USER,
+    versions: versions.length > 0 ? versions : [createMessageVersion('')],
+    sources: sources && sources.length > 0 ? sources : undefined,
+    reasoning:
+      message?.reasoning && typeof message.reasoning.content === 'string'
+        ? {
+            content: message.reasoning.content,
+            duration: Number(message.reasoning.duration) || 0,
+          }
+        : undefined,
+  }
+}
+
 export function getCurrentVersion(message: Message): MessageVersion {
-  return message.versions[0] || { id: 'default', content: '' }
+  return normalizeMessage(message).versions[0] || {
+    id: 'default',
+    content: '',
+  }
 }
 
 /**
@@ -124,13 +172,14 @@ export function formatMessageForAPI(message: Message): ChatCompletionMessage {
  * Excludes loading/streaming assistant messages and empty content
  */
 export function isValidMessage(message: Message): boolean {
-  if (!message || !message.from || !message.versions.length) return false
+  const normalizedMessage = normalizeMessage(message)
+  if (!normalizedMessage.from || !normalizedMessage.versions.length) return false
 
-  const content = message.versions[0]?.content
+  const content = normalizedMessage.versions[0]?.content
   if (content === undefined) return false
 
   // Exclude empty assistant messages (loading/streaming placeholders)
-  if (message.from === 'assistant' && !content.trim()) return false
+  if (normalizedMessage.from === 'assistant' && !content.trim()) return false
 
   return true
 }
@@ -206,7 +255,7 @@ export function updateAssistantMessageWithError(
   return updateLastAssistantMessage(messages, (message) => {
     const updatedMessage = updateCurrentVersionContent(
       message,
-      `${ERROR_MESSAGES.API_REQUEST_ERROR}: ${errorMessage}`
+      `${i18next.t(ERROR_MESSAGES.API_REQUEST_ERROR)}: ${errorMessage}`
     )
     return {
       ...updatedMessage,
@@ -300,9 +349,11 @@ export function sanitizeMessagesOnLoad(messages: Message[]): Message[] {
     return []
   }
 
+  const normalizedMessages = messages.map(normalizeMessage)
+
   let targetIndex = -1
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i]
+  for (let i = normalizedMessages.length - 1; i >= 0; i--) {
+    const m = normalizedMessages[i]
     if (
       m?.from === MESSAGE_ROLES.ASSISTANT &&
       (m?.status === MESSAGE_STATUS.LOADING ||
@@ -313,9 +364,9 @@ export function sanitizeMessagesOnLoad(messages: Message[]): Message[] {
     }
   }
 
-  if (targetIndex === -1) return messages
+  if (targetIndex === -1) return normalizedMessages
 
-  const finalized = finalizeMessage(messages[targetIndex])
+  const finalized = finalizeMessage(normalizedMessages[targetIndex])
   const hasContent = finalized.versions?.[0]?.content?.trim()
   const hasReasoning = finalized.reasoning?.content?.trim()
 
@@ -329,13 +380,15 @@ export function sanitizeMessagesOnLoad(messages: Message[]): Message[] {
       : {
           ...updateCurrentVersionContent(
             finalized,
-            `${ERROR_MESSAGES.API_REQUEST_ERROR}: ${ERROR_MESSAGES.INTERRUPTED}`
+            `${i18next.t(ERROR_MESSAGES.API_REQUEST_ERROR)}: ${i18next.t(
+              ERROR_MESSAGES.INTERRUPTED
+            )}`
           ),
           status: MESSAGE_STATUS.ERROR,
           isReasoningStreaming: false,
         }
 
-  const result = [...messages]
+  const result = [...normalizedMessages]
   result[targetIndex] = sanitized
   return result
 }

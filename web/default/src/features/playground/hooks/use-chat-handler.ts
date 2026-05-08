@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import i18next from 'i18next'
 import { toast } from 'sonner'
 import { sendChatCompletion } from '../api'
 import { MESSAGE_STATUS, ERROR_MESSAGES } from '../constants'
@@ -122,21 +123,28 @@ export function useChatHandler({
         if (!choice) return
 
         onMessageUpdate((prev) =>
-          updateLastAssistantMessage(prev, (message) => ({
-            ...finalizeMessage(
-              {
-                ...message,
-                versions: [
-                  {
-                    ...message.versions[0],
-                    content: choice.message?.content || '',
-                  },
-                ],
-              },
-              choice.message?.reasoning_content
-            ),
-            status: MESSAGE_STATUS.COMPLETE,
-          }))
+          updateLastAssistantMessage(prev, (message) => {
+            const baseVersion =
+              Array.isArray(message.versions) && message.versions.length > 0
+                ? message.versions[0]
+                : { id: 'default', content: '' }
+
+            return {
+              ...finalizeMessage(
+                {
+                  ...message,
+                  versions: [
+                    {
+                      ...baseVersion,
+                      content: choice.message?.content || '',
+                    },
+                  ],
+                },
+                choice.message?.reasoning_content
+              ),
+              status: MESSAGE_STATUS.COMPLETE,
+            }
+          })
         )
       } catch (error: unknown) {
         const err = error as {
@@ -148,7 +156,7 @@ export function useChatHandler({
         handleStreamError(
           err?.response?.data?.message ||
             err?.message ||
-            ERROR_MESSAGES.API_REQUEST_ERROR,
+            i18next.t(ERROR_MESSAGES.API_REQUEST_ERROR),
           err?.response?.data?.error?.code || undefined
         )
       }

@@ -17,6 +17,7 @@
   ListTodo,
   Settings,
   Crown,
+  Share2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useMemo } from 'react'
@@ -126,6 +127,11 @@ export function useSidebarData(): SidebarData {
               url: '/wallet',
               icon: Wallet,
             },
+            {
+              title: t('Affiliate Center'),
+              url: '/affiliate',
+              icon: Share2,
+            },
             ...(canSeeMemberUpgrade
               ? [
                   {
@@ -184,6 +190,5 @@ export function useSidebarData(): SidebarData {
     [canSeeGroupMonitor, canSeeMemberUpgrade, t]
   )
 }
-
 
 

@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -173,6 +174,20 @@ export function SSRFSection({ defaultValues }: SSRFSectionProps) {
     }
 
     baselineRef.current = normalized
+    form.reset({
+      fetch_setting: {
+        enable_ssrf_protection:
+          normalized['fetch_setting.enable_ssrf_protection'],
+        allow_private_ip: normalized['fetch_setting.allow_private_ip'],
+        domain_filter_mode: normalized['fetch_setting.domain_filter_mode'],
+        ip_filter_mode: normalized['fetch_setting.ip_filter_mode'],
+        domain_list: normalized['fetch_setting.domain_list'].join('\n'),
+        ip_list: normalized['fetch_setting.ip_list'].join('\n'),
+        allowed_ports: normalized['fetch_setting.allowed_ports'].join(','),
+        apply_ip_filter_for_domain:
+          normalized['fetch_setting.apply_ip_filter_for_domain'],
+      },
+    })
   }
 
   const domainFilterMode = form.watch('fetch_setting.domain_filter_mode')
@@ -251,12 +266,14 @@ export function SSRFSection({ defaultValues }: SSRFSectionProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value='false'>
-                      {t('Blacklist (Block listed domains)')}
-                    </SelectItem>
-                    <SelectItem value='true'>
-                      {t('Whitelist (Only allow listed domains)')}
-                    </SelectItem>
+                    <SelectGroup>
+                      <SelectItem value='false'>
+                        {t('Blacklist (Block listed domains)')}
+                      </SelectItem>
+                      <SelectItem value='true'>
+                        {t('Whitelist (Only allow listed domains)')}
+                      </SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
                 <FormDescription>
@@ -304,12 +321,14 @@ export function SSRFSection({ defaultValues }: SSRFSectionProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value='false'>
-                      {t('Blacklist (Block listed IPs)')}
-                    </SelectItem>
-                    <SelectItem value='true'>
-                      {t('Whitelist (Only allow listed IPs)')}
-                    </SelectItem>
+                    <SelectGroup>
+                      <SelectItem value='false'>
+                        {t('Blacklist (Block listed IPs)')}
+                      </SelectItem>
+                      <SelectItem value='true'>
+                        {t('Whitelist (Only allow listed IPs)')}
+                      </SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
                 <FormDescription>

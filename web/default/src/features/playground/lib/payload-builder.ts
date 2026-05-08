@@ -15,7 +15,7 @@ export function buildChatCompletionPayload(
   parameterEnabled: ParameterEnabled
 ): ChatCompletionRequest {
   // Filter and format valid messages
-  const processedMessages = messages
+  const processedMessages = (Array.isArray(messages) ? messages : [])
     .filter(isValidMessage)
     .map(formatMessageForAPI)
 

@@ -9,6 +9,8 @@ import { DrawingSettingsSection } from './drawing-settings-section'
 import { FAQSection } from './faq-section'
 import { HomePageConfigSection } from './home-page-config-section'
 import { MemberUpgradeSection } from './member-upgrade-section'
+import { OverviewLayoutSection } from './overview-layout-section'
+import { PricingMetadataSection } from './pricing-metadata-section'
 import { TopNoticeSection } from './top-notice-section'
 import { UptimeKumaSection } from './uptime-kuma-section'
 
@@ -47,6 +49,41 @@ const CONTENT_SECTIONS = [
     build: (settings: ContentSettings) => (
       <HomePageConfigSection
         defaultValue={settings['console_setting.home_page_config']}
+      />
+    ),
+  },
+  {
+    id: 'overview-layout',
+    titleKey: 'Overview Layout',
+    descriptionKey:
+      'Configure the display order of cards on the dashboard overview page.',
+    build: (settings: ContentSettings) => (
+      <OverviewLayoutSection
+        defaultValue={settings['console_setting.overview_layout']}
+      />
+    ),
+  },
+  {
+    id: 'pricing-metadata',
+    titleKey: 'Pricing Metadata',
+    descriptionKey:
+      'Configure which metadata fields appear on the model pricing detail page.',
+    build: (settings: ContentSettings) => (
+      <PricingMetadataSection
+        defaultValues={{
+          pricingContextEnabled:
+            settings['console_setting.pricing_context_enabled'],
+          pricingMaxOutputEnabled:
+            settings['console_setting.pricing_max_output_enabled'],
+          pricingModalitiesEnabled:
+            settings['console_setting.pricing_modalities_enabled'],
+          pricingKnowledgeCutoffEnabled:
+            settings['console_setting.pricing_knowledge_cutoff_enabled'],
+          pricingReleaseDateEnabled:
+            settings['console_setting.pricing_release_date_enabled'],
+          pricingCapabilitiesEnabled:
+            settings['console_setting.pricing_capabilities_enabled'],
+        }}
       />
     ),
   },

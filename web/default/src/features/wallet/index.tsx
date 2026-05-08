@@ -1,14 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { getSelf } from '@/lib/api'
 import { useStatus } from '@/hooks/use-status'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { SectionPageLayout } from '@/components/layout'
-import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
 import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialog'
-import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
 import { WalletStatsCard } from './components/wallet-stats-card'
@@ -16,7 +15,6 @@ import { DEFAULT_DISCOUNT_RATE } from './constants'
 import {
   useTopupInfo,
   usePayment,
-  useAffiliate,
   useRedemption,
   useCreemPayment,
   useWaffoPayment,
@@ -36,6 +34,10 @@ import type {
 
 interface WalletProps {
   initialShowHistory?: boolean
+  paymentReturnInfo?: {
+    status: 'success' | 'fail' | 'pending' | 'cancelled'
+    tradeNo?: string
+  }
 }
 
 export function Wallet(props: WalletProps) {
@@ -48,24 +50,24 @@ export function Wallet(props: WalletProps) {
     useState<PaymentMethod>()
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null)
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
-  const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
   const [redemptionCode, setRedemptionCode] = useState('')
   const [creemDialogOpen, setCreemDialogOpen] = useState(false)
   const [selectedCreemProduct, setSelectedCreemProduct] =
     useState<CreemProduct | null>(null)
   const [showSubscriptionPanel, setShowSubscriptionPanel] = useState(true)
+  const paymentToastShownRef = useRef<string | null>(null)
 
   const { status } = useStatus()
   const { currency } = useSystemConfig()
   const { topupInfo, presetAmounts, loading: topupLoading } = useTopupInfo()
 
-  // Calculate effective exchange rate - when display type is USD, use rate of 1
   const effectiveUsdExchangeRate = useMemo(() => {
     return currency?.quotaDisplayType === 'USD'
       ? 1
       : currency?.usdExchangeRate || 1
   }, [currency?.quotaDisplayType, currency?.usdExchangeRate])
+
   const {
     amount: paymentAmount,
     calculating,
@@ -73,19 +75,12 @@ export function Wallet(props: WalletProps) {
     calculatePaymentAmount,
     processPayment,
   } = usePayment()
-  const {
-    affiliateLink,
-    loading: affiliateLoading,
-    transferQuota,
-    transferring,
-  } = useAffiliate()
   const { redeeming, redeemCode } = useRedemption()
   const { processing: creemProcessing, processCreemPayment } = useCreemPayment()
   const { processWaffoPayment } = useWaffoPayment()
   const { processing: pancakeProcessing, processWaffoPancakePayment } =
     useWaffoPancakePayment()
 
-  // Fetch and refresh user data
   const fetchUser = useCallback(async () => {
     try {
       setUserLoading(true)
@@ -94,7 +89,6 @@ export function Wallet(props: WalletProps) {
         setUser(response.data as UserWalletData)
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error('Failed to fetch user data:', error)
     } finally {
       setUserLoading(false)
@@ -112,50 +106,65 @@ export function Wallet(props: WalletProps) {
     }
   }, [props.initialShowHistory])
 
-  // Initialize topup amount when topup info is loaded
+  useEffect(() => {
+    const status = props.paymentReturnInfo?.status
+    const tradeNo = props.paymentReturnInfo?.tradeNo || ''
+    if (!status) return
+
+    const toastKey = `${status}:${tradeNo}`
+    if (paymentToastShownRef.current === toastKey) return
+    paymentToastShownRef.current = toastKey
+
+    switch (status) {
+      case 'success':
+        toast.success(t('Payment successful'))
+        break
+      case 'pending':
+        toast.info(t('Payment pending'))
+        break
+      case 'cancelled':
+        toast.info(t('Payment cancelled'))
+        break
+      default:
+        toast.error(t('Payment failed'))
+        break
+    }
+  }, [props.paymentReturnInfo?.status, props.paymentReturnInfo?.tradeNo, t])
+
   useEffect(() => {
     if (topupInfo && topupAmount === 0) {
       const minTopup = getMinTopupAmount(topupInfo)
       setTopupAmount(minTopup)
-
-      // Calculate initial payment amount with default payment type
       const defaultPaymentType = getDefaultPaymentType(topupInfo)
       calculatePaymentAmount(minTopup, defaultPaymentType)
     }
   }, [topupInfo, topupAmount, calculatePaymentAmount])
 
-  // Get current payment type (selected or default)
   const getCurrentPaymentType = useCallback(() => {
     return selectedPaymentMethod?.type || getDefaultPaymentType(topupInfo)
   }, [selectedPaymentMethod, topupInfo])
 
-  // Handle preset selection
   const handleSelectPreset = (preset: PresetAmount) => {
     setTopupAmount(preset.value)
     setSelectedPreset(preset.value)
     calculatePaymentAmount(preset.value, getCurrentPaymentType())
   }
 
-  // Handle topup amount change
   const handleTopupAmountChange = (amount: number) => {
     setTopupAmount(amount)
     setSelectedPreset(null)
     calculatePaymentAmount(amount, getCurrentPaymentType())
   }
 
-  // Handle payment method selection
   const handlePaymentMethodSelect = async (method: PaymentMethod) => {
     setSelectedPaymentMethod(method)
     setPaymentLoading(method.type)
 
     try {
-      // Validate minimum topup
       const minTopup = getMinTopupAmount(topupInfo)
       if (topupAmount < minTopup) {
         return
       }
-
-      // Calculate payment amount and show confirmation dialog
       await calculatePaymentAmount(topupAmount, method.type)
       setConfirmDialogOpen(true)
     } finally {
@@ -163,7 +172,6 @@ export function Wallet(props: WalletProps) {
     }
   }
 
-  // Handle payment confirmation
   const handlePaymentConfirm = async () => {
     if (!selectedPaymentMethod) return
 
@@ -178,7 +186,6 @@ export function Wallet(props: WalletProps) {
     }
   }
 
-  // Handle redemption
   const handleRedeem = async () => {
     if (!redemptionCode) return
 
@@ -189,22 +196,11 @@ export function Wallet(props: WalletProps) {
     }
   }
 
-  // Handle transfer
-  const handleTransfer = async (amount: number) => {
-    const success = await transferQuota(amount)
-    if (success) {
-      await fetchUser()
-    }
-    return success
-  }
-
-  // Handle Creem product selection
   const handleCreemProductSelect = (product: CreemProduct) => {
     setSelectedCreemProduct(product)
     setCreemDialogOpen(true)
   }
 
-  // Handle Creem payment confirmation
   const handleCreemConfirm = async () => {
     if (!selectedCreemProduct) return
 
@@ -227,7 +223,6 @@ export function Wallet(props: WalletProps) {
     }
   }
 
-  // Get discount rate for current topup amount
   const getDiscountRate = useCallback(() => {
     return topupInfo?.discount?.[topupAmount] || DEFAULT_DISCOUNT_RATE
   }, [topupInfo, topupAmount])
@@ -296,13 +291,6 @@ export function Wallet(props: WalletProps) {
                 onAvailabilityChange={handleSubscriptionAvailabilityChange}
               />
             </div>
-
-            <AffiliateRewardsCard
-              user={user}
-              affiliateLink={affiliateLink}
-              onTransfer={() => setTransferDialogOpen(true)}
-              loading={affiliateLoading}
-            />
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>
@@ -318,14 +306,6 @@ export function Wallet(props: WalletProps) {
         processing={processing || pancakeProcessing}
         discountRate={getDiscountRate()}
         usdExchangeRate={effectiveUsdExchangeRate}
-      />
-
-      <TransferDialog
-        open={transferDialogOpen}
-        onOpenChange={setTransferDialogOpen}
-        onConfirm={handleTransfer}
-        availableQuota={user?.aff_quota ?? 0}
-        transferring={transferring}
       />
 
       <BillingHistoryDialog

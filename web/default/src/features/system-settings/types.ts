@@ -45,6 +45,12 @@ export type GeneralSettings = {
   PreConsumedQuota: number
   QuotaForInviter: number
   QuotaForInvitee: number
+  AffiliateCommissionPercentage: number
+  AffiliateCommissionTiers: string
+  AffiliateTransferEnabled: boolean
+  AffiliateWithdrawEnabled: boolean
+  AffiliateMinWithdrawQuota: number
+  AffiliateWithdrawNotice: string
   TopUpLink: string
   'general_setting.docs_link': string
   'quota_setting.enable_free_model_pre_consume': boolean
@@ -121,6 +127,13 @@ export type ContentSettings = {
   'console_setting.faq': string
   'console_setting.uptime_kuma_groups': string
   'console_setting.home_page_config': string
+  'console_setting.overview_layout': string
+  'console_setting.pricing_context_enabled': boolean
+  'console_setting.pricing_max_output_enabled': boolean
+  'console_setting.pricing_modalities_enabled': boolean
+  'console_setting.pricing_knowledge_cutoff_enabled': boolean
+  'console_setting.pricing_release_date_enabled': boolean
+  'console_setting.pricing_capabilities_enabled': boolean
   'console_setting.contact_enabled': boolean
   'console_setting.contact_image': string
   'console_setting.contact_title': string
