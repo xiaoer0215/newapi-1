@@ -1,9 +1,16 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router'
-import { ArrowLeft, Code2, HeartPulse, Info, Timer } from 'lucide-react'
+import {
+  ArrowLeft,
+  BadgeDollarSign,
+  Code2,
+  Grid2X2,
+  HeartPulse,
+  Info,
+  Timer,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useStatus } from '@/hooks/use-status'
 import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -31,11 +38,6 @@ import { getPerfMetrics } from '../api'
 import { DEFAULT_TOKEN_UNIT, QUOTA_TYPE_VALUES } from '../constants'
 import { usePricingData } from '../hooks/use-pricing-data'
 import {
-  getPricingMetadataVisibility,
-  hasVisibleQuickStats,
-  type PricingMetadataVisibility,
-} from '../lib/metadata-visibility'
-import {
   getDynamicPriceEntries,
   getDynamicPricingSummary,
   getDynamicPricingTiers,
@@ -48,18 +50,17 @@ import {
   formatUptimePct,
 } from '../lib/mock-stats'
 import { getAvailableGroups, isTokenBasedModel } from '../lib/model-helpers'
-import { inferModelMetadata } from '../lib/model-metadata'
+import { inferModelMetadata, type ModelMetadata } from '../lib/model-metadata'
 import { formatFixedPrice, formatGroupPrice } from '../lib/price'
 import type {
-  Modality,
-  ModelCapability,
   PriceType,
   PricingModel,
   TokenUnit,
 } from '../types'
 import { DynamicPricingBreakdown } from './dynamic-pricing-breakdown'
 import { ModelDetailsApi, ModelDetailsProviderInfo } from './model-details-api'
-import { ModalityIcons } from './model-details-modalities'
+import { ModelDetailsApps } from './model-details-apps'
+import { ModelDetailsCapabilities } from './model-details-capabilities'
 import { ModelDetailsPerformance } from './model-details-performance'
 import { ModelDetailsQuickStats } from './model-details-quick-stats'
 
@@ -75,106 +76,126 @@ function SectionTitle(props: { children: React.ReactNode }) {
   )
 }
 
-const CAPABILITY_LABEL_KEYS: Record<ModelCapability, string> = {
-  function_calling: 'Function calling',
-  streaming: 'Streaming',
-  vision: 'Vision',
-  json_mode: 'JSON mode',
-  structured_output: 'Structured output',
-  reasoning: 'Reasoning',
-  tools: 'Tools',
-  system_prompt: 'System prompt',
-  web_search: 'Web search',
-  code_interpreter: 'Code interpreter',
-  caching: 'Prompt caching',
-  embeddings: 'Embeddings',
-}
-
-function CompactCapabilityList(props: { capabilities: ModelCapability[] }) {
+function OverviewHighlights(props: { model: PricingModel }) {
   const { t } = useTranslation()
+  const tags = parseTags(props.model.tags)
+  const endpoints = props.model.supported_endpoint_types || []
+  const groups = Array.isArray(props.model.enable_groups)
+    ? props.model.enable_groups.filter(Boolean)
+    : []
 
-  if (props.capabilities.length === 0) {
-    return (
-      <span className='text-muted-foreground text-xs'>
-        {t('No capabilities reported for this model.')}
-      </span>
-    )
-  }
-
-  return (
-    <div className='flex flex-wrap gap-1.5'>
-      {props.capabilities.map((capability) => (
-        <span
-          key={capability}
-          className='bg-muted text-muted-foreground rounded-md px-2 py-1 text-xs font-medium'
-        >
-          {t(CAPABILITY_LABEL_KEYS[capability] ?? capability)}
-        </span>
-      ))}
-    </div>
-  )
-}
-
-function CompactModalities(props: { input: Modality[]; output: Modality[] }) {
-  const { t } = useTranslation()
-
-  return (
-    <div className='grid gap-2 sm:grid-cols-2'>
-      <div className='flex items-center justify-between gap-3 rounded-lg border px-3 py-2'>
-        <span className='text-muted-foreground text-xs font-medium'>
-          {t('Input')}
-        </span>
-        <ModalityIcons modalities={props.input} />
-      </div>
-      <div className='flex items-center justify-between gap-3 rounded-lg border px-3 py-2'>
-        <span className='text-muted-foreground text-xs font-medium'>
-          {t('Output')}
-        </span>
-        <ModalityIcons modalities={props.output} />
-      </div>
-    </div>
-  )
-}
-
-function ModelSignalsSection(props: {
-  capabilities: ModelCapability[]
-  input: Modality[]
-  output: Modality[]
-  visibility: PricingMetadataVisibility
-}) {
-  const { t } = useTranslation()
-  const showCapabilities = props.visibility.capabilities
-  const showModalities = props.visibility.modalities
-
-  if (!showCapabilities && !showModalities) {
-    return null
-  }
+  const items: Array<{ label: string; value: React.ReactNode }> = [
+    {
+      label: t('Provider'),
+      value:
+        props.model.vendor_name ||
+        props.model.vendor_description ||
+        props.model.vendor_icon ||
+        t('Unknown'),
+    },
+    {
+      label: t('Type'),
+      value:
+        props.model.quota_type === QUOTA_TYPE_VALUES.TOKEN
+          ? t('Token-based')
+          : t('Per Request'),
+    },
+    {
+      label: t('Compatible API routes'),
+      value:
+        endpoints.length > 0 ? (
+          <div className='flex flex-wrap gap-1'>
+            {endpoints.slice(0, 4).map((endpoint) => (
+              <span
+                key={endpoint}
+                className='bg-muted text-muted-foreground rounded px-1.5 py-0.5 font-mono text-[10px]'
+              >
+                {endpoint}
+              </span>
+            ))}
+            {endpoints.length > 4 && (
+              <span className='text-muted-foreground/60 text-[11px]'>
+                +{endpoints.length - 4}
+              </span>
+            )}
+          </div>
+        ) : (
+          t('Unknown')
+        ),
+    },
+    {
+      label: t('Available groups'),
+      value:
+        groups.length > 0 ? (
+          <div className='flex flex-wrap gap-1'>
+            {groups.slice(0, 5).map((group) => (
+              <GroupBadge key={group} group={group} size='sm' />
+            ))}
+            {groups.length > 5 && (
+              <span className='text-muted-foreground/60 text-[11px]'>
+                +{groups.length - 5}
+              </span>
+            )}
+          </div>
+        ) : (
+          t('Unknown')
+        ),
+    },
+    {
+      label: t('Tags'),
+      value:
+        tags.length > 0 ? (
+          <div className='flex flex-wrap gap-1'>
+            {tags.slice(0, 6).map((tag) => (
+              <span
+                key={tag}
+                className='bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] font-medium'
+              >
+                {tag}
+              </span>
+            ))}
+            {tags.length > 6 && (
+              <span className='text-muted-foreground/60 text-[11px]'>
+                +{tags.length - 6}
+              </span>
+            )}
+          </div>
+        ) : (
+          t('No tags')
+        ),
+    },
+  ]
 
   return (
     <section>
-      <SectionTitle>
-        {showCapabilities && showModalities
-          ? `${t('Capabilities')} / ${t('Supported modalities')}`
-          : showCapabilities
-            ? t('Capabilities')
-            : t('Supported modalities')}
-      </SectionTitle>
-      <div
-        className={cn(
-          'grid gap-3 rounded-xl border p-3',
-          showCapabilities && showModalities
-            ? '@2xl/details:grid-cols-[minmax(0,1.5fr)_minmax(260px,1fr)]'
-            : '@2xl/details:grid-cols-1'
-        )}
-      >
-        {showCapabilities && (
-          <CompactCapabilityList capabilities={props.capabilities} />
-        )}
-        {showModalities && (
-          <CompactModalities input={props.input} output={props.output} />
-        )}
+      <SectionTitle>{t('Model profile')}</SectionTitle>
+      <div className='grid gap-px overflow-hidden rounded-xl border bg-border @2xl/details:grid-cols-2'>
+        {items.map((item) => (
+          <div key={item.label} className='bg-card px-3 py-2.5'>
+            <div className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+              {item.label}
+            </div>
+            <div className='mt-1 min-h-5 text-sm'>{item.value}</div>
+          </div>
+        ))}
       </div>
     </section>
+  )
+}
+
+function OverviewTab(props: { model: PricingModel; metadata: ModelMetadata }) {
+  return (
+    <div className='space-y-6'>
+      <OverviewSummaryGrid model={props.model} />
+      <ModelDetailsQuickStats metadata={props.metadata} />
+      <OverviewHighlights model={props.model} />
+      <ModelDetailsCapabilities
+        capabilities={props.metadata.capabilities}
+        input={props.metadata.input_modalities}
+        output={props.metadata.output_modalities}
+      />
+      <ModelDetailsProviderInfo model={props.model} />
+    </div>
   )
 }
 
@@ -892,7 +913,51 @@ function GroupPricingSection(props: {
   )
 }
 
-const TAB_VALUES = ['overview', 'performance', 'api'] as const
+function PricingTab(props: {
+  model: PricingModel
+  groupRatio: Record<string, number>
+  usableGroup: Record<string, { desc: string; ratio: number }>
+  autoGroups: string[]
+  priceRate: number
+  usdExchangeRate: number
+  tokenUnit: TokenUnit
+  showRechargePrice: boolean
+}) {
+  const isDynamic =
+    props.model.billing_mode === 'tiered_expr' && Boolean(props.model.billing_expr)
+
+  return (
+    <div className='space-y-6'>
+      <section className='bg-card/60 space-y-5 rounded-xl border p-4 shadow-sm'>
+        <PriceSection
+          model={props.model}
+          priceRate={props.priceRate}
+          usdExchangeRate={props.usdExchangeRate}
+          tokenUnit={props.tokenUnit}
+          showRechargePrice={props.showRechargePrice}
+        />
+        {isDynamic && (
+          <DynamicPricingBreakdown billingExpr={props.model.billing_expr} />
+        )}
+      </section>
+
+      <section className='bg-card/60 rounded-xl border p-4 shadow-sm'>
+        <GroupPricingSection
+          model={props.model}
+          groupRatio={props.groupRatio}
+          usableGroup={props.usableGroup}
+          autoGroups={props.autoGroups}
+          priceRate={props.priceRate}
+          usdExchangeRate={props.usdExchangeRate}
+          tokenUnit={props.tokenUnit}
+          showRechargePrice={props.showRechargePrice}
+        />
+      </section>
+    </div>
+  )
+}
+
+const TAB_VALUES = ['overview', 'pricing', 'performance', 'api', 'apps'] as const
 type TabValue = (typeof TAB_VALUES)[number]
 
 const TAB_META: Record<
@@ -900,8 +965,10 @@ const TAB_META: Record<
   { icon: React.ComponentType<{ className?: string }>; labelKey: string }
 > = {
   overview: { icon: Info, labelKey: 'Overview' },
+  pricing: { icon: BadgeDollarSign, labelKey: 'Pricing' },
   performance: { icon: HeartPulse, labelKey: 'Performance' },
   api: { icon: Code2, labelKey: 'API' },
+  apps: { icon: Grid2X2, labelKey: 'Apps' },
 }
 
 export interface ModelDetailsContentProps {
@@ -918,17 +985,8 @@ export interface ModelDetailsContentProps {
 
 export function ModelDetailsContent(props: ModelDetailsContentProps) {
   const { t } = useTranslation()
-  const { status } = useStatus()
   const showRechargePrice = props.showRechargePrice ?? false
   const metadata = useMemo(() => inferModelMetadata(props.model), [props.model])
-  const metadataVisibility = useMemo(
-    () => getPricingMetadataVisibility(status),
-    [status]
-  )
-
-  const isDynamic =
-    props.model.billing_mode === 'tiered_expr' &&
-    Boolean(props.model.billing_expr)
 
   return (
     <div className='@container/details space-y-4'>
@@ -951,48 +1009,21 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
           })}
         </TabsList>
 
-        <TabsContent value='overview' className='space-y-6 outline-none'>
-          <OverviewSummaryGrid model={props.model} />
+        <TabsContent value='overview' className='outline-none'>
+          <OverviewTab model={props.model} metadata={metadata} />
+        </TabsContent>
 
-          <section className='bg-card/60 space-y-5 rounded-xl border p-4 shadow-sm'>
-            <SectionTitle>{t('Pricing')}</SectionTitle>
-            <PriceSection
-              model={props.model}
-              priceRate={props.priceRate}
-              usdExchangeRate={props.usdExchangeRate}
-              tokenUnit={props.tokenUnit}
-              showRechargePrice={showRechargePrice}
-            />
-            {isDynamic && (
-              <DynamicPricingBreakdown billingExpr={props.model.billing_expr} />
-            )}
-            <GroupPricingSection
-              model={props.model}
-              groupRatio={props.groupRatio}
-              usableGroup={props.usableGroup}
-              autoGroups={props.autoGroups}
-              priceRate={props.priceRate}
-              usdExchangeRate={props.usdExchangeRate}
-              tokenUnit={props.tokenUnit}
-              showRechargePrice={showRechargePrice}
-            />
-          </section>
-
-          {hasVisibleQuickStats(metadataVisibility) && (
-            <ModelDetailsQuickStats
-              metadata={metadata}
-              visibility={metadataVisibility}
-            />
-          )}
-
-          <ModelSignalsSection
-            capabilities={metadata.capabilities}
-            input={metadata.input_modalities}
-            output={metadata.output_modalities}
-            visibility={metadataVisibility}
+        <TabsContent value='pricing' className='outline-none'>
+          <PricingTab
+            model={props.model}
+            groupRatio={props.groupRatio}
+            usableGroup={props.usableGroup}
+            autoGroups={props.autoGroups}
+            priceRate={props.priceRate}
+            usdExchangeRate={props.usdExchangeRate}
+            tokenUnit={props.tokenUnit}
+            showRechargePrice={showRechargePrice}
           />
-
-          <ModelDetailsProviderInfo model={props.model} />
         </TabsContent>
 
         <TabsContent value='performance' className='outline-none'>
@@ -1004,6 +1035,10 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
             model={props.model}
             endpointMap={props.endpointMap}
           />
+        </TabsContent>
+
+        <TabsContent value='apps' className='outline-none'>
+          <ModelDetailsApps model={props.model} />
         </TabsContent>
       </Tabs>
     </div>
