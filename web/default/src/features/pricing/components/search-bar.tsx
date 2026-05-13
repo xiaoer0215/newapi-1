@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
@@ -30,16 +30,9 @@ export function SearchBar(props: SearchBarProps) {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const shortcutLabel = useMemo(() => {
-    if (typeof navigator === 'undefined') {
-      return 'Ctrl K'
-    }
-    return /Mac|iPhone|iPad|iPod/i.test(navigator.platform) ? '⌘K' : 'Ctrl K'
-  }, [])
-
   return (
     <div className={cn('relative', props.className)}>
-      <Search className='text-muted-foreground/60 pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2' />
+      <Search className='text-muted-foreground/60 pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2' />
       <input
         ref={inputRef}
         type='text'
@@ -47,31 +40,30 @@ export function SearchBar(props: SearchBarProps) {
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
         className={cn(
-          'border-border/70 bg-background/85 supports-[backdrop-filter]:bg-background/72 placeholder:text-muted-foreground/50 shadow-sm backdrop-blur-sm',
+          'border-border/60 bg-background placeholder:text-muted-foreground/50',
           'hover:border-border',
           'focus:border-primary/50 focus:ring-primary/20 focus:ring-2',
-          'h-11 w-full rounded-2xl border pr-16 pl-11 text-sm transition-all outline-none'
+          'h-10 w-full rounded-lg border pr-16 pl-10 text-sm transition-all outline-none'
         )}
         aria-label={t('Search models')}
       />
-      <div className='absolute top-1/2 right-3 flex -translate-y-1/2 items-center gap-1'>
+      <div className='absolute top-1/2 right-2.5 flex -translate-y-1/2 items-center gap-1'>
         {props.value ? (
           <Button
             variant='ghost'
             size='icon'
             onClick={props.onClear}
-            className='text-muted-foreground/60 hover:text-foreground size-8 rounded-full'
+            className='text-muted-foreground/60 hover:text-foreground size-7'
             aria-label={t('Clear search')}
           >
             <X className='size-4' />
           </Button>
         ) : (
-          <kbd className='bg-muted/70 text-muted-foreground pointer-events-none hidden rounded-full border px-2 py-1 font-mono text-[10px] sm:inline-flex'>
-            {shortcutLabel}
+          <kbd className='bg-muted text-muted-foreground pointer-events-none hidden rounded border px-1.5 py-0.5 font-mono text-[10px] sm:inline-block'>
+            ⌘K
           </kbd>
         )}
       </div>
     </div>
   )
 }
-
