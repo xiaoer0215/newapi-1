@@ -1,11 +1,5 @@
-﻿import { useCallback, useState } from 'react'
-import {
-  ArrowUpDown,
-  Check,
-  Filter,
-  Grid2X2,
-  Table2,
-} from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { ArrowUpDown, Check, Filter, Grid2X2, Table2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -149,7 +143,7 @@ export function PricingToolbar(props: PricingToolbarProps) {
   return (
     <div className='rounded-xl border p-3'>
       <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
-        <div className='flex flex-wrap items-center gap-2'>
+        <div className='flex items-center gap-2'>
           <Button
             type='button'
             variant='outline'
@@ -177,12 +171,6 @@ export function PricingToolbar(props: PricingToolbarProps) {
               </span>
             )}
           </div>
-
-          {props.hasActiveFilters && (
-            <Badge variant='secondary' className='rounded-md px-2 py-0.5 text-[11px]'>
-              {props.activeFilterCount} {t('Filter')}
-            </Badge>
-          )}
         </div>
 
         <div className='flex flex-wrap items-center gap-2'>
@@ -298,4 +286,3 @@ export function PricingToolbar(props: PricingToolbarProps) {
     </div>
   )
 }
-
