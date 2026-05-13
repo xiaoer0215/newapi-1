@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import {
   flexRender,
   getCoreRowModel,
@@ -75,59 +75,57 @@ export function PricingTable(props: PricingTableProps) {
 
   return (
     <div className='space-y-4'>
-      <div className='border-border/70 bg-background/85 supports-[backdrop-filter]:bg-background/72 overflow-hidden rounded-2xl border shadow-sm backdrop-blur-sm'>
-        <div className='overflow-x-auto'>
-          <Table className='min-w-[980px]'>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className='bg-background/90'>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead
-                      key={header.id}
-                      style={{ width: header.getSize() }}
-                      className='bg-background/90 text-muted-foreground sticky top-0 z-10 text-[10px] font-medium tracking-wider uppercase backdrop-blur'
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
+      <div className='overflow-hidden rounded-lg border'>
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    style={{ width: header.getSize() }}
+                    className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableSkeleton table={table} keyPrefix='pricing-skeleton' />
+            ) : table.getRowModel().rows.length === 0 ? (
+              <TableEmpty
+                colSpan={columns.length}
+                title={t('No Models Found')}
+                description={t('No models match your current filters.')}
+              />
+            ) : (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  onClick={() => handleRowClick(row.original)}
+                  className='hover:bg-muted/30 cursor-pointer transition-colors'
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableSkeleton table={table} keyPrefix='pricing-skeleton' />
-              ) : table.getRowModel().rows.length === 0 ? (
-                <TableEmpty
-                  colSpan={columns.length}
-                  title={t('No Models Found')}
-                  description={t('No models match your current filters.')}
-                />
-              ) : (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    onClick={() => handleRowClick(row.original)}
-                    className='hover:bg-muted/30 cursor-pointer transition-colors'
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className='align-top'>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {!isLoading && models.length > 0 && <DataTablePagination table={table} />}
