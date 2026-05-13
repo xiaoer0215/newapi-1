@@ -39,6 +39,17 @@ function EmptyAboutState() {
         </div>
         <div className='space-y-4 text-sm'>
           <p>
+            {t('Open Source Repository:')}{' '}
+            <a
+              href='https://github.com/xiaoer0215/newapi-1'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-primary hover:underline'
+            >
+              {t('https://github.com/xiaoer0215/newapi-1')}
+            </a>
+          </p>
+          <p>
             {t('New API Project Repository:')}{' '}
             <a
               href='https://github.com/QuantumNous/new-api'
