@@ -12,13 +12,11 @@ import {
   formatYearMonth,
   type ModelMetadata,
 } from '../lib/model-metadata'
-import type { PricingMetadataVisibility } from '../lib/metadata-visibility'
 import type { Modality } from '../types'
 import { ModalityIcons } from './model-details-modalities'
 
 type QuickStatsProps = {
   metadata: ModelMetadata
-  visibility: PricingMetadataVisibility
 }
 
 type Stat = {
@@ -31,22 +29,19 @@ type Stat = {
 
 function buildStats(
   metadata: ModelMetadata,
-  visibility: PricingMetadataVisibility,
   t: (key: string) => string
 ): Stat[] {
-  const stats: Stat[] = []
-
-  if (visibility.context) {
-    stats.push({
+  const stats: Stat[] = [
+    {
       key: 'context',
       icon: Layers,
       label: t('Context'),
       value: formatTokenCount(metadata.context_length),
       hint: t('Maximum input window'),
-    })
-  }
+    },
+  ]
 
-  if (visibility.maxOutput && metadata.max_output_tokens > 0) {
+  if (metadata.max_output_tokens > 0) {
     stats.push({
       key: 'max-output',
       icon: Maximize2,
@@ -56,21 +51,19 @@ function buildStats(
     })
   }
 
-  if (visibility.modalities) {
-    stats.push({
-      key: 'modalities',
-      icon: FileText,
-      label: t('Modalities'),
-      value: (
-        <ModalityFlow
-          input={metadata.input_modalities}
-          output={metadata.output_modalities}
-        />
-      ),
-    })
-  }
+  stats.push({
+    key: 'modalities',
+    icon: FileText,
+    label: t('Modalities'),
+    value: (
+      <ModalityFlow
+        input={metadata.input_modalities}
+        output={metadata.output_modalities}
+      />
+    ),
+  })
 
-  if (visibility.knowledgeCutoff && metadata.knowledge_cutoff) {
+  if (metadata.knowledge_cutoff) {
     stats.push({
       key: 'knowledge',
       icon: Sparkles,
@@ -79,7 +72,7 @@ function buildStats(
     })
   }
 
-  if (visibility.releaseDate && metadata.release_date) {
+  if (metadata.release_date) {
     stats.push({
       key: 'release',
       icon: CalendarClock,
@@ -103,7 +96,7 @@ function ModalityFlow(props: { input: Modality[]; output: Modality[] }) {
 
 export function ModelDetailsQuickStats(props: QuickStatsProps) {
   const { t } = useTranslation()
-  const stats = buildStats(props.metadata, props.visibility, t)
+  const stats = buildStats(props.metadata, t)
 
   return (
     <div className='bg-muted/20 grid grid-cols-2 gap-px overflow-hidden rounded-lg border @md/details:grid-cols-3 @2xl/details:grid-cols-5'>
