@@ -60,7 +60,18 @@ function ProjectAttribution(props: { currentYear: number }) {
   const { t } = useTranslation()
 
   return (
-    <div className='text-muted-foreground/45 text-center text-xs sm:text-right'>
+    <div className='text-muted-foreground/45 flex flex-col items-center gap-1 text-center text-xs sm:items-end sm:text-right'>
+      <span className='text-muted-foreground/45'>
+        {t('Fork Repository')}{' '}
+        <a
+          href='https://github.com/xiaoer0215/newapi-1'
+          target='_blank'
+          rel='noopener noreferrer'
+          className='text-foreground/70 font-medium transition-colors hover:text-foreground'
+        >
+          {t('https://github.com/xiaoer0215/newapi-1')}
+        </a>
+      </span>
       <span className='text-muted-foreground/45'>
         &copy; {props.currentYear}{' '}
         <a
